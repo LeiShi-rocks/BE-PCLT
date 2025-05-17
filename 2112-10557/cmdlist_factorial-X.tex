@@ -1,0 +1,1472 @@
+\def\prg{\medskip\noindent\textbf}
+\def\mtas{{multi-armed }}
+\def\mes{{multi-armed experiments}}
+\def\mess{{multi-armed experiments }}
+\def\tosrp{\tilde\Omega_{*,\rr,\pp}}
+\def\hybr{\hy\la \hbr\ra}
+\def\hybsr{\hy\la\hbsr\ra}
+\def\hybrs{ \hy\la\hbrs\ra}
+\def\hybs{\hy\la b_*\ra}
+\def\hybi{\hy\la \bi \ra}
+\def\hyba{\hy\la b \ra}
+\def\la{\langle}
+\def\ra{\rangle}
+\def\hsxy{\hat S_{xY}}\def\gt{\Gamma^\T}
+\def\her{\hep_\rr}
+\def\rpp{R_\perp}
+\def\rpt{R^\T_\perp}
+\def\xcc{(X_1, \ldots, X_{Q})}
+\def\xpp{(X_1 + \cdots + X_{Q})}
+\def\lhs{\textsc{lhs}}
+\def\rhs{\textsc{rhs}}
+\def\iln{(1_n^\T \otimes \il)}
+\def\ilnt{(1_n\otimes \il)} %\beginp \il \\ \vdots \\ \il \endp}
+\def\ill{(\il, \il)}
+\def\rge{(-\il, \il)}
+\def\illt{\beginp \il\\ \il\endp}
+\def\rgte {\beginp -\il\\ \il\endp}
+\def\dto{\Delta_1}
+\def\ar{A_\rr}
+\def\br{B_\rr}\def\xxinv{(X^\T X)^{-1}}
+\def\xx{X^\T X}
+\def\il{I_l}\def\xot{X_1^\T}
+\def\xtt{X_2^\T}
+\def\xtht{X_3^\T}
+\def\xt{X_2}
+\def\xth{X_3}
+\def\soo{S_{11}}
+\def\stt{S_{22}}
+\def\sto{S_{21}}
+\def\sot{S_{12}}
+
+\def\dt{\Delta}\def\hsrs{\hat\Psi_{\rr,*}}
+\def\ccinvs{(\chi_*^\T\chi_*)^{-1}}
+\def\Ms{M_*}
+\def\murq{\mu_{\rr,q}}
+\def\hvr{\hat V_\rr}
+\def\tgginv{\tgg^{-1}}
+\def\hsig{\hat\Sigma}
+\def\hsigr{\hsig_\rr}
+\def\hsigrq{(\hsigr)_{[Q]}}
+\def\hsis{\hsi_*}
+\def\hesi{\hep_{*,i}}
+\def\neqinv{N_q^{-1}}\def\hsxq{\hat S^2_x(q)}
+\def\hsxyq{\hat S_{xY(q)}}
+\def\tgg{{\red \tilde\Gamma}}
+\def\qit{{q\in\mt}}\def\txi{\tilde{\xi}}
+\def\fa{A}
+\def\torpp{{\red \torp'}}
+\def\topp{{\red \top'}}
+\def\tmu{\tilde\mu}
+\def\tetp{\tilde{\eta}_\pp}
+\def\tetm{\tilde{\eta}_\mmm}
+\def\tmur{\tilde\mu_\rr}
+\def\tetrp{\tilde{\eta}_{\rr,\pp}}
+\def\tetrm{\tilde{\eta}_{\rr,\mmm}}
+
+\def\nllinv{(\ninv\lmdpt\lmdp)^{-1}}
+\def\nffinv{(\ninv\fpt\fpp)^{-1}}
+\def\ninv{N^{-1}}
+\def\cspt{\csp^\T}
+\def\csmt{\csm^\T}
+\def\tcspt{\tcsp^\T}
+\def\tcsp{\tilde C_{\sss,\pp}}
+\def\ft{F^\T}
+\def\piinv{\Pi^{-1}}
+\def\gsinv{\gs^{-1}}
+\def\gst{\gs^\T}
+\def\fmt{\fm^\T}
+\def\mlr{M_{\lin,\rr}}
+\def\fpq{f_{\pp(q)}}
+\def\fmq{f_{\mmm(q)}}
+\def\gs{\Gamma_\sss}
+\def\tsigr{\tilde\Sigma_\rr}\def\trr{\tilde R}
+\def\tchil{\tilde\chi_\lin}
+\def\tcl{\tilde\chi_\lin}
+\def\tmr{\tilde M_\rr}
+\def\chil{\chi_\lin}
+\def\cse{c_{\sss,\emptyset}}\def\tsig{\tilde\Sigma}
+\def\tsigp{\tilde\Sigma_\pp}
+\def\tsigrp{\tilde\Sigma_{\rr,\pp}}
+\def\wheret{\qquad\text{where} \ \ }
+\def\lmdm{\Lambda_\mmm}
+\def\tsigl{\tilde\Sigma_\lin}
+\def\fm{F_\mmm}
+\def\fmi{f_{\mmm,i}}
+\def\xm{X_\mmm}
+\def\lmdp{\Lambda_\pp}
+\def\lmdpt{\Lambda_\pp^\T}
+\def\xp{X_\pp}
+\def\xpt{X_\pp^\T}
+\def\xmt{X_\mmm^\T}
+\def\tthrp{\tilde\theta_{\rr,\pp}}
+\def\tthp{\tilde\theta_{\pp}}
+\def\tthm{\tilde\theta_{\mmm}}
+
+\def\ttp{\ttau_\pp}
+\def\ttm{\ttau_\mmm}
+\def\tol{\tilde\Omega_\lin}
+\def\fpp{F_\pp}
+\def\fpi{f_{\pp,i}}
+\def\fpt{\fpp^\T}
+\def\hbro{\hb_{\rr,1}}
+\def\tepr{\tep_{\rr}}
+\def\tepri{\tep_{\rr,i}}
+\def\hepr{\hep_{\rr}}
+\def\hepri{\hep_{\rr,i}}
+\def\tepi{\tep_i}
+\def\tep{\tilde\epsilon}
+\def\hV{\hv}
+\def\hvro{\hv_{\rr,1}}
+\def\top{\tilde\Omega_\pp}
+\def\tgd{\ttrp}
+
+\def\rb{A}
+\def\mub{B}
+\def\apo{average potential outcomes}
+\def\cpoc{correlations between potential outcomes and covariates}\def\tsyx{\hat S_{Yx}} 
+\def\gray{\color{gray}}
+\def\torp{\tilde \Omega_{\rr,\pp}}
+\def\zikz{\zik^0}
+\def\zimkz{\zimk^0}
+
+\def\ust{\us^\T}
+\def\co{\go}
+\def\poo{potential-outcome-only}
+\def\go{correlation-only}
+\def\gor{correlation-only restriction}
+\def\so{separable}
+\def\sor{separable restriction}
+\def\sr{separable restriction}
+\def\tss{S'}
+\def\yc{\hy}
+ \def\ppo{{\scaleto{+}{6pt}}}
+ \def\mmz{{\scaleto{-}{6pt}}}
+ \def\pmo{\{-1, +1\}}
+\def\hylr{\hy_{\lin,\rr}}
+\def\hyfr{\hy_{\fisher,\rr}}
+\def\hynr{\hy_{\nm,\rr}}
+
+\def\ttrp{\tilde\tau_{\rr,\pp}}
+\def\ttrm{\tilde\tau_{\rr,\mmm}}
+\def\ttrmk{\ttau_{\rr,\mk}}
+\def\ttsp{\ttau_{*,\pp}}
+\def\ttnp{\ttau_{\nm,\pp}}
+\def\ttfp{\ttau_{\fisher,\pp}}
+\def\ttlp{\ttau_{\lin,\pp}}
+
+\def\ttsrp{\ttau_{*,\rr,\pp}}
+\def\ttnrp{\ttau_{\nm,\rr,\pp}}
+\def\tts{\ttau_{*}}
+\def\ttn{\ttau_{\neyman}}
+\def\ttf{\ttau_{\fisher}}
+\def\ttl{\ttau_{\lin}}
+
+
+\def\ttfrp{\ttau _{\fisher, \rr,\pp}}
+\def\ttnrp{\ttau _{\neyman, \rr,\pp}}
+\def\ttlrp{\ttau _{\lin,\rr ,\pp}}
+\def\ttsrp{\ttau _{*, \rr,\pp}}
+\def\tq{t_{(q)}}
+
+
+\def\ttsmk{\ttau_{*, \mk}}
+\def\ttnmk{\ttau_{\nm, \mk}}
+\def\ttfmk{\ttau_{\fisher, \mk}}
+\def\ttlmk{\ttau_{\lin, \mk}}
+
+\def\ttnrmk{\ttau_{\nm, \rr,\mk}}
+\def\ttfrmk{\ttau_{\fisher, \rr,\mk}}
+\def\ttlrmk{\ttau_{\lin, \rr, \mk}}
+
+
+\def\ttsrmk{\ttau_{*, \rr, \mk}}
+\def\ttau{\tilde\tau}
+%\def\htplp{\htau_{\rr,\pp}^0}
+\def\murs{\mu_{\rr,\sss}}
+\def\us{U_\sss}
+\def\vrrs{V_{\rr,\sss}}
+\def\hvs{\hat V_*}
+\def\tos{\tilde \Omega_*}
+\def\ca{c_\A}
+\def\cb{c_\B}
+\def\cab{c_\AB}
+\def\csk{\cmk}
+\def\cmk{c_\mk}
+\def\ndt{non-degenerate linear transformation of the  regressor vector}
+\def\hyrz{\hy_{\rr,0}}
+\def\hbrz{\hb_{\rr,0}}
+\def\hyrs{\hy_{\rr,\sss}}
+\def\hbrs{\hb_{\rr,\sss}}
+\def\brsq{\beta_{\rr,\sss,q}}
+\def\hbrsq{\hb_{\rr,\sss,q}}
+\def\kik{{k\in\mk}}
+\def\ziks{\zik^\sss}
+\def\zik{Z_{ik}}
+\def\zimks{\zimk}
+\def\htzrmk{\tilde\tau^0_{\rr,\mk}}
+\def\htzrp{\tilde\tau^0_{\rr,\pp}}
+
+\def\cza{c_{0, \A}}
+\def\czb{c_{0, \B}}
+\def\czab{c_{0, \AB}}
+\def\tabz{\tau_{0,\AB}}
+\def\htz{\tilde \tau^0}
+\def\tz{\tau_0}
+\def\tzp{\tau_{0,\pp}}
+\def\tzm{\tau_{0,\mmm}}
+\def\czm{C_{0,\mmm}}
+\def\czmk{c_{0, \mk}}
+
+%\def\tsmk{\tau_{\sss,\mk}}
+%\def\tsm{\tau_{\sss,\mmm}}
+\def\tsmk{\tau_{\mk}}
+\def\tsm{\tau_{\sss,\mmm}}
+
+\def\csmt{C^\T_{\sss,\mmm}}
+\def\csm{C_{\sss,\mmm}}
+\def\csmk{c_{\sss, \mk}}
+
+
+\def\tzmk{\tau_{0, \mk}}
+
+\def\epni{\ep_{\neyman,i}}
+\def\vrr{V_\rr}
+
+\def\cst{C_\sss^\T}
+\def\cs{C_\sss}
+\def\csp{C_{\sss,\pp}}
+\def\ts{\tau_\sss}
+\def\tsp{\tau_{\sss,\pp}}
+\def\ta{\tau_\A}
+\def\tb{\tau_\B}
+\def\tp{\tau_\pp}
+
+\def\htq{\htau^\sss }
+\def\htqfrp{\htau^\sss _{\fisher, \rr,\pp}}
+\def\htqnrp{\htau^\sss _{\neyman, \rr,\pp}}
+\def\htqlrp{\htau^\sss _{\lin,\rr ,\pp}}
+\def\htqsrp{\htau^\sss _{*, \rr,\pp}}
+
+\def\htqfp{\htau^\sss _{\fisher, \pp}}
+\def\htqnp{\htau^\sss _{\neyman, \pp}}
+\def\htqlp{\htau^\sss _{\lin,\pp}}
+\def\htqsp{\htau^\sss _{*,\pp}}
+
+\def\htqnra{\htau^\sss _{\nm, \rr,\A}}
+\def\htqfra{\htau^\sss _{\fisher, \rr,\A}}
+\def\htqlra{\htau^\sss _{\llr ,\A}}
+\def\htqsra{\htau^\sss _{*, \rr,\A}}
+
+\def\htqnrb{\htau^\sss _{\nm, \rr,\B}}
+\def\htqfrb{\htau^\sss _{\fisher, \rr,\B}}
+\def\htqlrb{\htau^\sss _{\llr ,\B}}
+\def\htqsrb{\htau^\sss _{*, \rr,\B}}
+
+\def\htqsrp{\htau^\sss _{*,\rr,\pp}}
+\def\htqsp{\htau^\sss _{*,\pp}}
+
+\def\htqnmk{\htq_{\nm, \mk}}
+\def\htqfmk{\htq_{\fisher, \mk}}
+\def\htqlmk{\htq_{\lin, \mk}}
+\def\htqsmk{\htq_{*, \mk}}
+
+\def\htqnrmk{\htq_{\nm, \rr, \mk}}
+\def\htqfrmk{\htq_{\fisher, \rr, \mk}}
+\def\htqlrmk{\htq_{\llr , \mk}}
+\def\htqsrmk{\htq_{*, \rr, \mk}}
+
+\def\htql{\htau^\sss _\lin}
+\def\htqf{\htau^\sss _\fisher}
+\def\htqn{\htau^\sss _\neyman}
+\def\htqlr{\htau^\sss _{\lr }}
+\def\htqfr{\htau^\sss _{\fisher,\rr}}
+\def\htqfrp{\htau^\sss _{\fisher,\rr,\pp}}
+\def\htqfp{\htau^\sss _{\fisher,\pp}}
+\def\htqs{\htau^\sss _*}
+\def\htqsr{\htau^\sss _{*,\rr}}
+
+\def\htp{\tilde\tau^0 }
+\def\htpfrp{\htz _{\fisher, \rr,\pp}}
+\def\htpnrp{\htz _{\neyman, \rr,\pp}}
+\def\htplrp{\htz _{\lin,\rr ,\pp}}
+\def\htpsrp{\htz _{*, \rr,\pp}}
+
+\def\htpfp{\htz _{\fisher, \pp}}
+\def\htpnp{\htz _{\neyman, \pp}}
+\def\htplp{\htz _{\lin,\pp}}
+\def\htpsp{\htz _{*,\pp}}
+
+\def\htpnra{\htz _{\nm, \rr,\A}}
+\def\htpfra{\htz _{\fisher, \rr,\A}}
+\def\htplra{\htz _{\llr ,\A}}
+\def\htpsra{\htz _{*, \rr,\A}}
+
+\def\htpnrb{\htz _{\nm, \rr,\B}}
+\def\htpfrb{\htz _{\fisher, \rr,\B}}
+\def\htplrb{\htz _{\llr ,\B}}
+\def\htpsrb{\htz _{*, \rr,\B}}
+
+\def\htpsrp{\htz _{*,\rr,\pp}}
+\def\htpsp{\htz _{*,\pp}}
+
+\def\htpnmk{\htp_{\nm, \mk}}
+\def\htpfmk{\htp_{\fisher, \mk}}
+\def\htplmk{\htp_{\lin, \mk}}
+\def\htpsmk{\htp_{*, \mk}}
+
+\def\htpnrmk{\htp_{\nm, \rr, \mk}}
+\def\htpfrmk{\htp_{\fisher, \rr, \mk}}
+\def\htplrmk{\htp_{\llr , \mk}}
+\def\htpsrmk{\htp_{*, \rr, \mk}}
+
+\def\htpl{\htz _\lin}
+\def\htpf{\htz _\fisher}
+\def\htpn{\htz _\neyman}
+\def\htplr{\htz _{\lr }}
+\def\htpfr{\htz _{\fisher,\rr}}
+\def\htpfrp{\htz _{\fisher,\rr,\pp}}
+\def\htpfp{\htz _{\fisher,\pp}}
+\def\htps{\htz _*}
+\def\htpsr{\htz _{*,\rr}}
+
+\def\ais{A_i^\textsc{s}}
+\def\bis{B_i^\textsc{s}}
+\def\sss{{\textsc{s}}}
+\def\tauA{\ta}
+\def\tauB{\tb}
+\def\tab{\tau_\AB}
+\def\taz{\tau_{0,\A}}
+\def\tbz{\tau_{0, \B}}
+\def\black{\color{black}}
+\def\taua{\tau_\A}
+\def\taub{\tau_\B}
+\def\tauab{\tau_\AB}
+\def\mrm{\mathbb R^m}
+\def\mc{\mathcal C}
+\def\ccf{\chif^\T\chif}
+\def\preci{\preceq_\infty}
+\def\opo{\Op(1)}
+\def\oo{O(1)}
+\def\ei{E_\infty}
+\def\covi{\cov_\infty}
+%\def\ei{E_\textup{a}}
+%\def\covi{\cov_\textup{a}}
+
+\def\uf{U_\fisher}
+\def\rgp{R_{\gp}}
+\def\rhgp{\rho_{\gp}}
+\def\brq{\beta_{\rr,q}}
+\def\xir{\xi_\rr}
+\def\xiri{\xi_{\rr,\infty}}
+\def\ary{A\rhy}
+%\def\cxi{(x_i - \bx)}
+%\def\cxi{x_{i, \textup{c}}}
+\def\cxi{x_i}
+
+\def\aryt{\rhy^\T A^\T}
+ 
+\def\lr{{\rr}}
+ 
+
+\def\ecc{the equal correlation condition}
+\def\zcc{the zero correlation condition}
+\def\eccs{{the equal correlation condition} }
+\def\zccs{{the zero correlation condition} }
+\def\czmk{c_{0, \mk}}
+\def\htsss{\htau_{**}}
+\def\xxx{\text{\red xxx} }
+\def\ho{\hat\Omega}
+\def\hsigl{\hat\Sigma_\lin}
+\def\hsigf{\hat\Sigma_\fisher}
+\def\hsigs{\hat\Sigma_*}
+\def\hsiglr{\hat\Sigma_{\lr }}
+\def\heli{\hat\ep_{\lin,i}}
+\def\heri{\hat\ep_{\rr,i}}
+\def\helri{\hat\ep_{\lr ,i}}
+\def\hefi{\hat\ep_{\fisher,i}}
+\def\heni{\hat\ep_{\nm,i}}
+\def\chin{\chi_\nm}
+
+
+\def\hsl{\hat\Psi_\lin}
+\def\hsf{\hat\Psi_\fisher}
+\def\hsn{\hat\Psi_\nm}
+\def\hslr{\hat\Psi_{\lr }}
+\def\hsr{\hsi_\rr}
+
+\def\rhypt{\rhy^\T}
+\def\tgmk{\tau_{\gamma, \mk}}
+\def\czp{C_{0, \pp}}
+\def\cz{C_0}
+
+
+
+\def\pk{\mathcal P_K}
+\def\mfm{\mathcal F_\mmm}
+\def\mfp{\mathcal F_\pp}
+\def\mfpp{\mathcal F_\pp'}
+\def\tpp{\tau_\pp}
+\def\tmk{\tau_\mk}
+\def\tauabz{\tau_\abz}
+\def\tauAB{\tau_\AB}
+\def\taubaz{\tau_\baz}
+
+\def\lrp{{\lr ,\pp}}
+\def\frp{{\fisher, \rr,\pp}}
+\def\nrp{{\neyman, \rr,\pp}}
+
+\def\lp{{\lin, \pp}}
+\def\fp{{\fisher, \pp}}
+\def\np{{\neyman, \pp}}
+
+
+
+\def\reslp{(R\tl - r)}
+\def\resl{R\tl - r}
+\def\resfp{(R\tf - r)}
+\def\resf{R\tf - r}
+
+ 
+\def\mulr{\mu_{\lin, \rr}} 
+\def\mufr{\mu_{\fisher, \rr}} 
+\def\munr{\mu_{\nm, \rr}} 
+
+\def\muri{\mu_{\lr ,\infty}}
+\def\mur{\mu_{\lr }}
+\def\blr{\beta_{\lr }}
+\def\htna{\htz _{\neyman,\A}}
+\def\htnb{\htz _{\neyman,\B}}
+\def\htnab{\htz _{\neyman,\AB}}
+\def\htnra{\htz _{\neyman,\rr,\A}}
+\def\htnrb{\htz _{\neyman,\rr,\B}}
+\def\htnrab{\htz _{\neyman,\rr,\AB}}
+
+\def\htfa{\htz _{\fisher,\A}}
+\def\htfb{\htz _{\fisher,\B}}
+\def\htfab{\htz _{\fisher,\AB}}
+\def\htfra{\htz _{\fisher,\rr,\A}}
+\def\htfrb{\htz _{\fisher,\rr,\B}}
+\def\htfrab{\htz _{\fisher,\rr,\AB}}
+
+\def\zimk{Z_{i, \mk}}
+\def\htla{\htz _{\lin,\A}}
+\def\htlb{\htz _{\lin,\B}}
+\def\htlab{\htz _{\lin,\AB}}
+\def\llr{\lin,\rr}
+\def\htlra{\htz _{\llr ,\A}}
+\def\htlrb{\htz _{\llr ,\B}}
+\def\htlrab{\htz _{\llr ,\AB}}
+
+
+\def\ad{& +}
+
+%\def\rols{r-\ols}
+%\def\rolss{r-\olss}
+\def\rols{\rls}
+\def\rolss{\rlss}
+\def\rls{\textsc{rls}}
+\def\rlss{{\textsc{rls} }}
+
+\def\rolsf{restricted {\ols}}
+\def\rolssf{restricted {\olss}}
+
+
+\def\dy{\Delta_Y}
+\def\dyf{\Delta_{Y, \fisher}}
+\def\dgf{\Delta_{\gamma, \fisher}}
+
+\def\mb{\mathcal{B}}
+\def\vlr{V_\rr}
+\def\vrr{V_\rr}
+\def\vfr{V_{\fisher,\rr}}
+\def\tf{\theta_\fisher}
+\def\uy{U_Y}
+\def\uyt{U_Y^\T}
+\def\eqq{\, &= \,}
+\def\simm{\, &\sim \,}
+\def\dz{\Delta_0}
+\def\es{\emat\otimes\sxx}
+\def\esinv{(\es)^{-1}}
+\def\ry{R_Y}
+\def\rg{R_\gamma}
+\def\rhy{\rho_Y}
+\def\rys{r_{Y,*}}
+\def\rhys{\rho_{Y,*}}
+\def\rhyn{\rho_{Y, \neyman}}
+\def\rhyf{\rho_{Y, \fisher}}
+\def\rhyl{\rho_{Y, \lin}}
+\def\ryn{r_{Y, \neyman}}
+\def\ryf{r_{Y, \fisher}}
+\def\ryl{r_{Y, \lin}}
+
+\def\rhg{\rho_\gamma}
+\def\rhgn{\rho_{\gamma, \neyman}}
+\def\rhgf{\rho_{\gamma, \fisher}}
+\def\rhgl{\rho_{\gamma, \lin}}
+
+
+\def\rhyt{\rho_Y^\T}
+\def\rhgt{\rho_\gamma^\T}
+\def\beginp{\begin{pmatrix}}
+\def\endp{\end{pmatrix}}
+
+\def\meani{N^{-1}\sumi}
+\def\ryt{R_Y^\T}
+\def\rgt{R_\gamma^\T}
+
+\def\coremat{\Phi}
+\def\emat{\Pi}
+\def\einv{\emat^{-1}}
+
+\def\tl{\theta_\lin}
+\def\nfl{* =\neyman,  \fisher, \lin}
+\def\nflr{* =\neyman,  \fisher, \lin, \rr}
+\def\fl{* = \fisher, \lin}
+\def\nf{* = \neyman, \fisher}
+\def\hefr{\heta_{\fisher,\rr}}
+
+\def\helr{\heta_{\lr }}
+
+\def\gqk{$Q_1\times \dots \times Q_K$ factorial experiment}
+\def\gqks{{$Q_1\times \dots \times Q_K$ factorial experiment }}
+
+\def\wiq{{ 1(Z_i = q)}}
+
+\def\ccinvs{(\chi_*^\T\chi_*)^{-1}}
+\def\Ms{M_*}
+
+\def\hefi{\hat\ep_{\fisher,i}}
+\def\heni{\hat\ep_{\nm,i}}
+
+\def\chin{\chi_\nm}
+\def\ddb{d_b}
+\def\ccf{\chif^\T\chif}
+\def\ddbi{d_{b,\infty}}
+\def\hyq{\hy(q)}
+
+
+
+\def\dgsi{\dg\in\{\ccc, \ccov, \imp, \mim, \mp, \cim\}}
+\def\dg{\dagger}
+\def\htss{\hts^\dg}
+\def\imp{\textup{imp}}
+\def\sumz{\sum_{z\in\mt}}
+\def\cim{\text{cim}}
+\def\mds{\md = \fisher, \lin}
+\def\md{*}
+\def\ccc{\textup{cc}}
+\def\ccov{\textup{ccov}}
+\def\mim{\textup{mim}}
+\def\mp{\textup{mp}}
+\def\htlr{\htau_{\lr }}
+\def\rbi{\rho_{b,\infty}}
+\def\hse{\hat{\textup{se}}}
+\def\vbbi{\vvbi}
+\def\prodk{\prod_{k=1}^K }
+\def\hsi{\hat\Psi}
+\def\hyb{{\red \hy_b}} %{\hy(b)}
+\def\hyg{\hy\la\gamma\ra} %{\hy(\gamma)}
+\def\htbt{\htau(b_0, b_1)}
+\def\htg{\htau_\gamma} 
+\def\htgt{\htau(\gamma_0, \gamma_1)}
+\def\succi{\succeq_\infty}
+\def\vgg{v(\gamma_0, \gamma_1)}%{v_\gamma}%
+\def\vvbi{v_{b,\infty}}
+\def\hblq{\hb_{\lin,q}}
+\def\thf{\theta_\fisher}
+
+\def\bri{ b_{\rr,\infty}}
+\def\bfri{ b_{\fisher, \rr,\infty}}
+\def\vri{V_{\rr,\infty}}
+\def\sri{\Sigma_\rr}
+\def\sfri{\Sigma_{\fisher,\rr}}
+
+\def\vpb{V^\para_b}
+\def\vpbi{V^\para_{b,\infty}}
+\def\vrb{\vr_b}
+\def\vrbi{\vr_{b,\infty}}
+\def\hvrbi{\hat V^\perp_{b,\infty}}
+\def\hvpbi{\hat V^\para_{b,\infty}}
+
+\def\precre{Assume complete randomization and Condition \ref{asym}.}
+\def\cre{complete randomization}
+\def\rem{the ReM in Definition \ref{def::rem-factorial}}
+\def\creasym{complete randomization and Condition \ref{asym}}
+\def\prerem{Assume the ReM in Definition \ref{def::rem-factorial} and  Condition \ref{asym}.}
+
+\def\sumiz{\sum_{i:Z_i = z}}
+ 
+\def\meaniq{N_q^{-1}\sum_{i:Z_i = q}}
+\def\sumiq{\sum_{i:Z_i = q}}
+\def\mkc{{\overline{\mk}}}\def\mrf{M_{\rr,\fisher}}
+\def\lf{R}
+\def\lft{R^\T}
+\def\ccl{\chil^\T\chil}
+\def\chil{\chi_\lin}
+\def\thl{\theta_\lin}
+\def\dzf{\Delta_{0,\fisher}}
+\def\mrfi{M_{\rr,\fisher,\infty}}
+
+\def\hthlr{\hth_{\lr }}
+
+\def\hblr{\hb_{\lr }}
+\def\hbsr{\hb_{*, \rr}}
+\def\hbfr{\hb_{\fisher, \rr}}
+\def\hblr{\hb_{\lin, \rr}}
+\def\hbnr{\hb_{\neyman, \rr}}
+
+\def\hbsfr{\hb^\sss_{\fisher, \rr}}
+\def\hbslr{\hb^\sss_{\lin, \rr}}
+\def\hbsnr{\hb^\sss_{\neyman, \rr}}
+\def\hbssr{\hb^\sss_{*, \rr}}
+
+\def\vsr{V_{*, \rr}}
+\def\vfr{V_{\fisher, \rr}}
+\def\vnr{V_{\neyman, \rr}}
+
+\def\vl{V_\lin}
+
+\def\cfy{\ry}
+\def\cfyt{\ryt}
+\def\cfg{R_{\gp}}
+\def\cfgt{\cfg^\T}
+\def\rrgp{r_{\gp}}
+
+\def\hyzlr{\hy^0_{\lin, \rr}}
+\def\hyzsr{\hy^0_{*, \rr}}
+\def\hyznr{\hy^0_{\neyman,\rr}}
+\def\hyzfr{\hy^0_{\fisher,\rr}}
+
+\def\hyslr{\hy^\sss_{\lin, \rr}}
+\def\hyssr{\hy^\sss_{*, \rr}}
+\def\hysnr{\hy^\sss_{\neyman,\rr}}
+\def\hysfr{\hy^\sss_{\fisher,\rr}}
+
+\def\hthfr{\hth_{\fisher,\rr}}
+\def\hthlr{\hth_{\lr }}
+
+
+ 
+\def\sz{s_0}
+
+\def\tefp{\teta_{\fisher, \tau\pp}}
+\def\hefp{\heta_{\fisher, \tau \pp}}
+
+\def\heta{\hat\eta}
+\def\teta{\tilde\eta}
+\def\an{{ \nm,\A}}
+\def\bn{{ \nm,\B}}
+\def\abn{{\nm,\ab}}
+\def\kn{{\nm,k}}
+\def\kkn{{\nm,kk'}}
+\def\mkn{{\nm,\mk}}
+\def\A{\textsc{a}}
+\def\B{\textsc{b}}
+\def\AB{\textsc{ab}}
+\def\vg{V_\gamma}
+\def\orange{\color{orange}}
+\def\gp{\gamma_\fisher}
+\def\tse{\tilde{\textup{se}}}
+\def\tyb{\tilde Y_b}
+\def\rhob{\rho_b}
+\def\frt{\textsc{frt}}
+\def\htl{\htau_\lin}
+\def\ab{\textsc{ab}}
+
+\def\A{\textsc{a}}
+\def\B{\textsc{b}}
+\def\tbtb{\tbt_b}
+\def\para{{\mkern3mu\vphantom{\perp}\vrule depth 0pt\mkern2mu\vrule depth 0pt\mkern3mu}}
+\def\htb{\htau\la b \ra}
+\def\dbbi{d_{b,\infty}}
+
+
+
+\def\pp{{\scaleto{+}{4pt}}}
+\def\mmm{{\scaleto{-}{4pt}}}
+\def\p{\textsc{p}}
+\def\tth{\tilde\theta}
+\def\tthr{\tilde\theta_\rr}
+
+\def\tx{\tilde X}
+\def\txx{\tilde x}
+\def\plim{\textup{plim\,}}
+
+\def\tsx{\hat S_x^2}
+
+\def\pq{e_q}
+\def\mri{M_{\rr,\infty}}
+\def\vf{v_\fisher}
+
+\def\chif{\chi_\fisher}
+\def\hthrf{\hth_{\rr,\fisher}}
+\def\bbr{\mathbb R}
+\def\aaa{a_\rr}
+\usepackage{scalerel}
+\def\hd{\hat\delta}
+\def\cc{\chi^\T\chi}\def\hbq{\hb_q}
+\def\htr{\htau_\rr}
+\def\mf{\mathcal{F}}
+\def\heta{\hat\eta}
+\def\chit{\chi_t}
+\def\lrl{\lt R\lmd }
+\def\lrlinv{(\lt R\lmd)^{-1}}
+\def\ct{L_\tau}
+\def\ctt{L_\tau^\T}
+\def\lmd{\Lambda}
+\def\linv{\lmd^{-1}}
+\def\lt{\lmd^\T}
+\def\linvt{(\lmbda^{-1})^\T}
+\def\ttt{T^\T T}
+\def\mminv{(M^\T M)^{-1}}
+\def\ttinv{(\ttt)^{-1}}
+
+\def\my{\mathcal{Y}}
+\def\me{\mathcal{E}}
+\def\vxd{V_{x\delta}}
+\def\bi{b_\infty}
+\def\bfi{b_{\fisher,\infty}}
+\def\bli{b_{\lin,\infty}}
+\def\dbi{D_{b, \infty}}
+\def\vbi{V_{b,\infty}}
+\def\db{D_b}
+\def\vb{V_b}
+
+\def\vpb{V_b^\para }
+
+\def\bbb{{(b_0,b_1)}}
+\def\bbi{{(b_{0,\infty},b_{1,\infty})}}
+\def\ccinvf{(\cff^\T\cff)^{-1}}
+\def\tccinvl{(\tcl^\T\tcl)^{-1}}
+\def\ccinvl{(\cll^\T\cll)^{-1}}
+\def\ccinvn{(\cnn^\T\cnn)^{-1}}
+\def\ccinv{(\chi^\T\chi)^{-1}}
+
+\def\cff{\chi_\fisher}
+\def\cll{\chi_\lin}
+\def\cnn{\chi_\nm}
+\def\mss{\chi_*}
+\def\hepn{\hep_\nm}
+\def\heps{\hep_*}
+\def\hepf{\hep_\fisher}
+\def\hepl{\hep_\lin}
+\def\hep{\hat\ep}
+\def\hthn{\hth_\nm}
+\def\hthf{\hth_\fisher}
+\def\hthl{\hth_\lin}
+\def\hths{\hth_*}
+
+\def\mk{\mathcal{K}}
+\def\zks{z_{\mathcal{K}}^*}
+\def\dr{D_\rr}
+
+\def\hybl{\hy(  b_\lin)}
+\def\hybf{\hy(  b_\fisher)}
+\def\core{(\emat^{-1}-\po)}
+%\def\core{\Phi}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\def\ty{\tilde Y}
+\def\tys{\tilde Y_*}
+\def\remd{ \|\hbd\|_\mm \leq a}
+\def\dhys{\hys -\by}
+\def\dn{D_\neyman}
+\def\df{D_\fisher}
+\def\hys{\hy_*}
+\def\hysr{\hy_{*,\rr}}
+\def\mus{\mu_*}
+\def\vari{\var_\infty}
+\def\vps{V^\para_*}
+\def\vrs{\vr_*}
+\def\perpi{\perp_\infty}
+\def\rhos{\rho_*}
+\def\po{1_{Q\times Q}}
+\def\hsi{\hat\Psi}
+\def\vttf{ V_{\fisher}}
+\def\vtts{ V_{\tau\tau,*}}
+\def\vtt{ V_{\tau\tau}}
+\def\vttn{ V_{\nm}}
+\def\vttl{ V_{\lin}}
+\def\Vs{V_*}
+\def\Vl{V_\lin}
+\def\vn{v_\nm}
+\def\Vn{V_\nm}
+
+\newcommand{\vtd}{ V_{\tau\delta}}
+\newcommand{\vtds}{ V_{\tau\delta,*}}
+\newcommand{\vtdf}{ V_{\tau\delta,\fisher}}
+\def\vtdl{ V_{\tau\delta,\lin}}
+\newcommand{\vtdn}{ V_{\tau\delta,\textsc{n}}}
+\newcommand{\vdts}{ V_{\delta\tau,*}}
+\newcommand{\vdtf}{ V_{\delta\tau,\fisher}}
+\newcommand{\vdtn}{ V_{\delta\tau, \textsc{n}}}
+ 
+
+
+\def\mhl{{Mahalanobis }}
+\def\mhld{{Mahalanobis distance }}
+\def\dsim{\stackrel{\cdot}{\sim}}
+
+
+
+\def\tbts{\tbt_*}
+\def\sumN{\sumi}
+\def\ppinv{(e_0e_1)^{-1}}
+\def\hs{\hat\Sigma}
+\def\sigi{\Sigma_\infty}
+\def\x{\star}
+\def\vsi{v_{*}}
+\def\on{1_N}
+\def\ont{1_N^\T}
+
+\def\csi{c_{*}}
+\def\oni{\Omega_{\neyman}}
+\def\osi{\Omega_{*}}
+
+\def\vx{v_x}
+\def\vsi{v_*}
+\def\vs{v_*}
+\def\cfi{c_{\fisher}}
+\def\cni{c_{\nm}}
+\def\cli{c_{\lin}}
+\def\os{\Omega_*}
+\def\rs{\rightsquigarrow}
+\def\hts{\htau_*}
+\def\neyman{\nm}
+\def\htN{\htn}
+\def\sqrtn{\sqrt N}
+\def\rtn{\sqrt N}
+%
+\def\hblo{\hb_{\lin,1}}
+\def\hblz{\hb_{\lin,0}}
+\def\htn{\htau_\nm}
+\def\Zi{Z_i}
+\def\Yi{Y_i}
+ 
+\def\mn{\mathcal{N}}
+\def\hyn{\hy_\nm}
+\def\hyf{\hy_\fisher}
+\def\hyr{\hy_\rr}
+
+\def\tsxyq{\hat S_{xY(q)}}
+
+\def\lce{\textsc{lce }}
+\def\lces{\textsc{lce}s }
+\def\hbrq{\hb_{\rr,q}}
+\def\hbr{\hb_{\rr}}
+
+\def\hxt{\hx^\T}
+
+\def\mi{\mathcal{I}}
+\def\hv{\hat V}
+\def\sqrtn{\sqrt N}
+\def\lri{L_{\rr,\infty}}
+
+\def\hy{\hat Y}\def\hgl{\hg_\lin}
+\def\yb{\bar Y}
+\def\by{\bar Y}
+\def\ep{\epsilon}
+\def\wiq{1(Z_i=q)}
+\def\eliq{\ep_{\lin,i}(q)}
+\def\eli{\ep_{\lin,i}}
+\def\efiq{\ep_{\fisher,i}(q)}
+\def\efi{\ep_{\fisher,i}}
+\def\eniq{\ep_{\neyman,i}(q)}
+\def\eni{\ep_{\neyman,i}}
+\def\yiq{Y_i(q)}
+\def\ybq{\bar Y(q)}
+\def\olss{{\textsc{ols} }}
+
+\def\gqt{\gamma_q^\T}
+ 
+\def\rp{\mathbb{R}^p}
+\def\begini{\begin{itemize}}
+\def\endi{\end{itemize}}
+\def\sxyq{S_{xY(q)}}
+\def\sxxinv{(S_x^2)^{-1}}
+\def\sumi{\sum_{i=1}^N}
+\def\ddinv{(D^\T D)^{-1}}
+\def\bbinv{(B^\T B)^{-1}}
+\def\rr{\textup{r}}
+\def\hthr{\hth_\rr}
+\def\mr{M_\rr}
+\def\rrinv{(R^\T R)^{-1}}
+
+\def\ab{\textsc{ab}}
+\def\abz{{\textsc{a}|\textsc{b} = 0 }}
+\def\baz{{\textsc{b}|\textsc{a} = 0}}
+
+
+\def\yb{\bar Y}
+\def\by{\bar Y}
+\def\ep{\epsilon}
+ 
+\def\eiq{\ep_i(q)}
+\def\epiq{\ep'_i(q)}
+\def\yiq{Y_i(q)}
+\def\ybq{\bar Y(q)}
+\def\olss{{\textsc{ols} }}
+\def\gqt{\gamma_q^\T}
+ 
+\def\rp{\mathbb{R}^p}
+\def\begini{\begin{itemize}}
+\def\endi{\end{itemize}}
+\def\sxyq{S_{xY(q)}}
+\def\sxxinv{(S_x^2)^{-1}}
+\def\sumi{\sum_{i=1}^N}
+\def\ddinv{(D^\T D)^{-1}}
+\def\rr{\textup{r}}
+\def\hthr{\hth_\rr}
+\def\mr{M_\rr}
+
+\def\hep{\hat\epsilon}
+\def\hth{\hat\theta}
+\def\red{\color{red}}
+\def\blue{\color{blue}}
+
+\def\md{\mathcal{D}}
+\def\bu{\bar u}
+\def\hu{\hat u}
+\def\rank{\textup{rank}}
+
+\def\di{\mathcal{D}_\infty}
+\def\ri{\textup{ri}}
+\def\htgu{\htau_{\Gamma,u}}
+\def\gq{\gamma}
+\def\q{{[Q]}}
+\def\bq{b_q}
+\def\ml{\mathcal{L}}
+\def\ttg{\tbt_\Gamma}
+\def\dhtg{\Delta\htg }
+\def\dhtgu{\Delta\htgu }
+\def\dttg{\Delta \ttg}
+\def\vttPl {V_{\tau\tau,\lambda}^\para }
+\def\vttRl {V_{\tau\tau,\lambda}^\perp}
+\def\vttPld {V_{\tau\tau,\lambda}^\para  |_{\hd}}
+\def\vttRld {V_{\tau\tau,\lambda}^\perp |_{\hd}}
+\def\vttPd {V_{\tau\tau,\delta}^\para }
+\def\vttRd {V_{\tau\tau,\delta}^\perp}
+\def\muzg{ \mu_{0,\Gamma}}
+\def\muzgu{ \mu_{0,\Gamma,u}}
+
+\def\vttPlwdu {V_{\tau\tau, w}^\para  |_{\hdu}}
+\def\vttRlwdu {V_{\tau\tau, w}^\perp |_{\hdu}}
+
+
+
+
+\def\hz{\hat z}
+\def\malw{\mathcal{A}_{\lambda_w,a}}
+\def\mal{\mathcal{A}_{\lambda,a}}
+
+
+
+\def\sm{Supplementary Material}
+
+\def\rems{ReM}
+\def\summ{\sum_{m=1}^M}
+\def\tG{\tilde G}
+\def\hg{\hat\gamma}
+\def\mgq{\mathcal{G}^*}
+\def\ma{\mathcal{A}}
+\def\tr{\text{tr}}
+\def\mm{{\scaleto{\mathcal{M}}{4.2pt}}}
+\def\sxx{S^2_{x}}
+\def\htx{\htau_x}
+\def\sxq{S_{xq}}
+\def\sqx{S_{qx}}
+\newcommand{\syx}{ S_{Y x}}
+\newcommand{\sxy}{ S_{ x Y}}
+
+\def\ms{* = \nm, \fisher,\lin}
+%%%%%%%%%%%%%%%%%
+\newcommand{\fs}{{\fisher, *}}
+%%%%%%%%%%%%%%%%%%%%
+\def\hyf{\hY_\fisher}
+\def\hyl{\hY_\lin}
+\def\olss{{\textsc{ols} }}
+\def\wlss{{\textsc{wls} }}
+\def\hb{\hat\beta }
+\def\hbf{\hat\beta_\fisher }
+\def\hbl{\hat\beta_\lin}
+
+\def\olsf{\ols_\fisher}
+\def\olsl{\ols_\lin}
+\newcommand{\htau}{ \hat\tau}
+\def\htf{ \hat\tau_\fisher}
+ 
+ 
+
+\def\hlw{\hat\lambda_\w}
+\def\hw{\hat\w}
+\def\hx{\hat x}
+\def\hX{\hat X}
+\def\bx{\bar x}
+
+\def\w{w}
+\def\hw{\hat\w}
+\def\bw{\bar\w}
+\newcommand{\vttw}{  V_{\tau\tau} |_{\hbd}}
+\newcommand{\vtlw}{  V_{\tau\lambda} |_{\hbd}}
+\newcommand{\vltw}{  V_{\lambda\tau} |_{\hbd}}
+\newcommand{\vllw}{  V_{\lambda\lambda} |_{\hbd}}
+
+\newcommand{\vtlwC}{  V_{\tau\lambda} |_{\hbdC}}
+\newcommand{\vltwC}{  V_{\lambda\tau} |_{\hbdC}}
+\newcommand{\vllwC}{  V_{\lambda\lambda} |_{\hbdC}}
+\newcommand{\vttz}{  V_{\tau\tau} |_{\hdu  }}
+\def\vtwu{  \vtw |_{\hdu  }}
+\def\vwtu{  \vwt  |_{\hdu  }}
+\newcommand{\vwwBz}{  \vww |_{\hdu  }}
+\newcommand{\vwt}{ V_{\w\tau}}
+\newcommand{\vtw}{ V_{\tau \w}}
+\newcommand{\vww}{ V_{\w\w}}
+\newcommand{\vdd}{ V_{\delta\delta}}
+\newcommand{\vuu}{ V_{uu}}
+\newcommand{\SigWW}{ \Sigma_{ W}}
+
+\newcommand{\vuw}{ V_{u\w}}
+\newcommand{\vwu}{ V_{\w u}}
+\newcommand{\vut}{ V_{u\tau}}
+\newcommand{\vtu}{ V_{ \tau u}}
+
+\def\htw{\hat{\tau}_w }
+
+
+
+
+\def\mt{\mathcal{T}}
+\newcommand{\Dt}{\tbD_{\bt}}
+\newcommand{\Dmu}{\tbD_{\mu}}
+\newcommand{\Da}{\tbD_{\ba}}
+\newcommand{\bC}{ \bm C}
+
+\newcommand{\hba}{\hat{\ba}}
+\newcommand{\hbv}{\hat{ \nu}}
+\newcommand{\mN}{\mathcal{N}}
+
+\newcommand{\bCq}{\bC_\Q}
+\newcommand{\hbo}{\hat\bo}
+\newcommand{\bo}{ \Omega}
+
+
+
+
+\newcommand{\Op}{O_P}
+\newcommand{\op}{o_P(1)}
+\newcommand{\Q}{\textsc{q}}
+\newcommand{\C}{\textsc{c}}
+
+
+\newcommand{\hbV}{ \hat{ V}}
+
+\newcommand{\sww}{ S_{ w  w}}
+\newcommand{\vlsinter}{\hat{ V}_{\lin}}
+\newcommand{\vlsadj}{\hat{ V}_{\fisher}}
+
+\newcommand{\vlsl}{\hat{ V}_{\lin}}
+\newcommand{\vlsfols}{\hat{ V}_{\fisher,\ols}}
+\newcommand{\vlsfwls}{\hat{ V}_{\fisher,\wls}}
+
+
+\newcommand{\tbtQ}{\tilde{ \tau}^*}
+\newcommand{\hbtQ}{\hat{ \tau}_\Q}
+
+\newcommand{\hbgadj}{\hat{\gamma}_\textsc{f}}
+
+
+\newcommand{\bG}{ G}
+\newcommand{\tbY}{\tilde{ Y}}
+
+
+\newcommand{\vyy}{ V_{YY}}
+
+\newcommand{\syw}{ S_{Y w}}
+\newcommand{\swy}{ S_{ w Y}}
+\newcommand{\hbU}{\hat { U}}
+
+
+\newcommand{\bPi}{ \Pi}
+\newcommand{\bPinv}{ \Pi^{-1}}
+\newcommand{\bP}{ P}
+\newcommand{\bR}{ R}
+\newcommand{\Ptwo}{ P_{( G^\perp)}}
+
+
+\newcommand{\hxi}{\hx_{2:Q}}
+\newcommand{\hbWi}{\hbW_{2:Q}}
+
+\newcommand{\bRi}{ R_{2:Q}}
+
+
+\newcommand{\bgamma}{ \Gamma}
+
+
+
+\newcommand{\bmun}{ \mu_\nm}
+\newcommand{\bmuf}{ \mu_\fisher}
+\newcommand{\bmus}{ \mu_*}
+
+
+
+\newcommand{\lin}{\textsc{l}}
+\newcommand{\nm}{\textsc{n}}
+
+\newcommand{\hbts}{\hbt_*}
+\newcommand{\hbtf}{\hbt_\textsc{f}}
+\newcommand{\hbtn}{\hbt_\textsc{n}}
+\newcommand{\hbtl}{\hbt_\textsc{l}}
+\newcommand{\bg}{  \gamma }
+
+
+\newcommand{\hbd}{\hat{\delta}}
+\newcommand{\hbdg}{\hbd_g}
+\newcommand{\hbdG}{\hbd_G}
+\newcommand{\hbdO}{\hat{\delta}^{( O)}}
+\newcommand{\hbdX}{\hat{\delta}^{( X)}}
+\newcommand{\hbdC}{\hat{\delta}( C)}
+\newcommand{\hbdT}{\hat{\delta}^{( \Theta)}}
+\newcommand{\hl }{\hat{\lambda}}
+\newcommand{\hbdh}{\hbd_h}
+
+
+
+\newcommand{\vddG}{ V_{\delta\delta, G}}
+\newcommand{\vll}{ V_{\lambda\lambda}}
+\newcommand{\vdl}{ V_{\delta\lambda}}
+\newcommand{\vld}{ V_{\lambda\delta}}
+\newcommand{\vddC}{ V_{\delta\delta}^{( C)}}
+\newcommand{\vddCB}{ V_{\delta\delta}^{( C,  B)}}
+
+
+
+\newcommand{\vtdG}{ V_{\tau\delta}}
+\newcommand{\vtdO}{ V_{\tau\delta}^{( O)}}
+\newcommand{\vtdC}{ V_{\tau\delta}^{( C)}}
+\newcommand{\vtl}{ V_{\tau\lambda}}
+\newcommand{\vtdT}{ V_{\tau\delta}^{( \Theta)}}
+
+\newcommand{\vlt}{ V_{\lambda\tau}}
+\newcommand{\vdtG}{ V_{\delta\tau,G}}
+\newcommand{\vdtC}{ V_{\delta\tau}^{( C)}}
+\newcommand{\vdt}{ V_{\delta\tau}}
+
+
+\newcommand{\sumn}{\sum_{i=1}^N}
+\newcommand{\sumq}{\sum_{q \in\mt} }
+\newcommand{\vttp}{\vtt^{\|}}
+
+\def\hvtt{\hat V_{\tau\tau}}
+\def\hvttP{\hat V_{\tau\tau}^\para }
+\def\hvttR{\hat V_{\tau\tau}^\perp}
+\def\hvtd{\hat V_{\tau \delta}}
+\def\hvdt{\hat V_{\delta\tau }}
+
+\newcommand{\bsl}{ S_\lin}
+\newcommand{\bsf}{ S_\fisher}
+\newcommand{\slin}{S_{\lin,qq'}}
+\newcommand{\sfisher}{S_{\fisher,qq'}}
+
+
+
+
+\newcommand{\hY}{\hat Y}
+\newcommand{\hbtt}{\hbt_{t}}
+ 
+%
+\newcommand{\pr}{{\rm pr}}
+ \newcommand{\ot}[1]{1, \ldots,#1}
+ \newcommand{\zt}[1]{0, \ldots,#1}
+  
+\newcommand{\Elr}{\mathbb{E}_\text{lm}} 
+\newcommand{\clr}{\text{Cov}_\text{lm}} 
+\newcommand{\ols}{\textsc{ols}} 
+\newcommand{\wls}{\textsc{wls}} 
+\newcommand{\ehw}{\textsc{ehw}} 
+\newcommand{\ehws}{\textsc{ehw} } 
+\newcommand{\diag}{\text{diag}} 
+\newcommand{\hbg}{\hat{\gamma}}
+\newcommand{\bgadjwls}{\bg_{\textsc{f},\wls}}
+\newcommand{\bgadjols}{\bg_{\textsc{f},\ols}}
+\newcommand{\hbgiwls}{\hat{ \gamma}^\wls}
+\newcommand{\hbgiols}{\hat{ \gamma}^\ols}
+\newcommand{\bgiwls}{ \gamma^\wls}
+\newcommand{\bgiols}{ \gamma^\ols}
+
+\newcommand{\hbgadjols}{\hat{\gamma}_{\textsc{f},\ols}}
+
+\newcommand{\hbtStaradjwls}{\hbt^\textsc{f}_{*,\wls}}
+\newcommand{\hbtStaradjols}{\hbt^\textsc{f}_{*,\ols}}
+\newcommand{\hbtFadjwls}{\hbt^\textsc{f}_{\mF, \wls}}
+\newcommand{\hbtFadjols}{\hbt^\textsc{f}_{\mF,\ols}}
+
+\newcommand{\vhatehw}{\hat{ V}_\ehw}
+
+\newcommand{\hbtfwls}{\hbt_{\textsc{f}, \wls}}
+\newcommand{\hbtfols}{\hbt_{\textsc{f}, \ols}}
+
+\newcommand{\hbtiwls}{\hbt^\textsc{l}_{\wls}}
+\newcommand{\hbtiols}{\hbt^\textsc{l}_{\ols}}
+
+
+\newcommand{\gadj}{ \gamma^\textsc{f}}
+\newcommand{\Gadj}{ \Gamma_\textsc{f}}
+\newcommand{\dGC}{\Delta \Gamma^\textsc{f}}
+
+\def\bv{(\beta_1, \dots, \beta_Q)}
+\newcommand{\betas}{(\bb_q)_{q=1}^Q}
+\newcommand{\betais}{(\hat{ \gamma}^\ols_q)}
+\newcommand{\betaas}{(\hat{\gamma}_{\textsc{f},\ols})}
+
+\newcommand{\hbYStar}{ \hbY^{( G)}_*(q)}
+\newcommand{\rqo}{\mathbb{R}^Q_1}
+\newcommand{\sg}{span ( g_h)_{h=1}^H }
+\newcommand{\bb}{ \beta}
+\newcommand{\be}{ \epsilon}
+
+
+
+
+
+% --------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\CRE}{\textsc{CRE}}
+\newcommand{\argmax}{\text{argmax}}
+\newcommand{\argmin}{\text{argmin}}
+\newcommand{\oY}{\dot{Y}}
+\def\T{{ \mathrm{\scriptscriptstyle T} }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\itemc}{\item[$\cdot$]}
+\newcommand{\itemq}{\item[$\longrightarrow$] \textbf{Question}:}
+\newcommand{\itemtd}{\item[$\longrightarrow$] \textbf{To do}:}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\oS}{\dot{ S}}
+\newcommand{\tS}{\tilde{ S}}
+\newcommand{\bba}{  \beta^\textsc{f}}
+\newcommand{\hbb}{ \hat{ \beta}}
+\newcommand{\hbbstar}{ \hat{ \beta}^*}
+\newcommand{\hbbi}{\hat{ \gamma}^\ols}
+\newcommand{\hbba}{\hat{\beta}_{\textsc{f},\ols}}
+\newcommand{\bbU}{\bar{ U}}
+\newcommand{\hbbU}{\hat{{ U}}}
+\newcommand{\hbbO}{\hat{{ \Omega}}}
+\newcommand{\bbO}{\bar{ \Omega}}
+\newcommand{\obbt}{\dot{\bar{ \tau}}}
+
+\newcommand{\obs}{\text{obs}}
+\newcommand{\cov}{\text{cov} } 
+\newcommand{\var}{\text{var} } 
+\newcommand{\mX}{\mathbb{X}}
+\newcommand{\mP}{\mathbb{P}}
+\newcommand{\mI}{ I}
+\newcommand{\mJ}{\mathbb{J}}
+\newcommand{\Gp}{ G_{\perp}}
+\newcommand{\Cp}{{ C_{\perp}}}
+\newcommand{\Bp}{{ B^{\perp}}}
+\newcommand{\Tp}{{ \Theta^{\perp}}}
+\newcommand{\ba}{ \alpha}
+%%%%%%%%%%%%%%%%%%%
+ \newcommand{\bTh}{ \Theta}
+
+
+\def\gg{ \Gamma_G}
+
+ 
+\newcommand{\bbz}{\bar{ z}}
+\newcommand{\bbZ}{\bar{ Z}}
+\newcommand{\bbw}{\bar{ w}}
+\newcommand{\bbW}{{\bar{ W}}}
+%%%%%%%%%%%%%%%%%%%%
+%\newcommand{\hbw}{\hat{{ w}}}
+\newcommand{\hbW}{\hat{{ W}}}
+ 
+
+\newcommand{\hbbz}{\hat{{ z}}}
+\newcommand{\hbbZ}{\hat{{ Z}}}
+\newcommand{\hbt}{\hat{\tau}}
+\newcommand{\hbtb}{\hbt(\beta)}
+
+
+
+\newcommand{\hdu}{\hbd_u}
+\newcommand{\hbw}{\hat{{ w}}}
+ 
+
+\newcommand{\hbtStar}{\tilde {\bt}}
+
+\newcommand{\hbtStarQ}{\hbt_*^{(Q-1)}}
+\newcommand{\hbtG}{\hbt_{ \Gamma}}
+\newcommand{\hbtGG}{\hbt^{( G)}_{ \Gamma}}
+\newcommand{\hbtCC}{\hbt^{( C)}_{ \Gamma^\textsc{f}}}
+\newcommand{\tbt}{\tilde{ \tau}}
+
+\newcommand{\bt}{ \tau}
+\newcommand{\tbtG}{\tilde{ \tau}_{ \Gamma}}
+\newcommand{\tbtGG}{\tilde{ \tau}^{( G)}_{ \Gamma}}
+\newcommand{\hbtCg}{\hbt^{( C)}_{ I_F\otimes  \gamma}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\newcommand{\bth}{  \theta}
+
+\newcommand{\adjwls}{{\fisher,\wls}}
+\newcommand{\adjols}{{\fisher,\ols}}
+
+ \newcommand{\hbtfp}{\hbt_\textsc{f}^*}
+\newcommand{\hmuadj}{\hat{\mu}_\textsc{f}}
+\newcommand{\hbgadjp}{\hat{ \gamma}_\textsc{f}^*}
+
+
+\newcommand{\all}{{\text{all}}}
+\newcommand{\fisher}{\textsc{f}}
+\newcommand{\adda}{{\text{adj, all}}}
+\newcommand{\addf}{{\text{adj, part}}}
+\newcommand{\hbtc}{\hbt_\textsc{c}}
+\newcommand{\hbtcols}{\hbt_{\textsc{c},\ols}}
+\newcommand{\hbtcwls}{\hbt_{\textsc{c},{\wls}}}
+%\newcommand{\tbtFadjols}{\tbt^\textsc{f}_{\mF,\ols}}
+%\newcommand{\tbtFadjwls}{\tbt^\textsc{f}_{\mF,\wls}}
+%\newcommand{\tmuadj}{\tilde{\mu}_\textsc{f}}
+\newcommand{\tmuadjols}{\hat{\mu}_{\textsc{c},\ols}}
+\newcommand{\tmuadjwls}{\hat\mu_{\textsc{c},\wls}}
+\newcommand{\tbaadjols}{\hat{\ba}_{\textsc{c},\ols}}
+\newcommand{\tbaadjwls}{\hat{\ba}_{\textsc{c},\wls}}
+\newcommand{\tbbadjols}{\hat{\bb}_{\textsc{c},\ols}}
+\newcommand{\tbbadjwls}{\hat{\bb}_{\textsc{c},\wls}}
+
+\newcommand{\bEF}{ E_{\mF}}
+\newcommand{\bEt}{ E_{\bt}}
+\newcommand{\bEmu}{ E_{\mu}}
+\newcommand{\bEa}{ E_{\ba}}
+
+
+\newcommand{\bWQ}{ W_{1:Q}}
+ \newcommand{\bY}{ \bar Y}
+\newcommand{\bCF}{ C_{\mF}}
+\newcommand{\tbDF}{\tilde{ D}_{\mF}}
+ 
+
+\newcommand{\ATEi}{\widehat{\text{ATE}}_\textsc{l}}
+\newcommand{\ATEa}{\widehat{\text{ATE}}_\textsc{f}}
+
+\newcommand{\cond}{\,\,\left|\,\,}
+\newcommand{\toinp}{\overset{p}{\to}}
+\newcommand{\td}{\noindent{\tiny\dotfill}}
+
+%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\bbY}{\bar{ Y}}
+\newcommand{\hbY}{\hat{{ Y}}}
+\newcommand{\dotsim}{\overset{.}{\sim}}
+\newcommand{\proj}{\textrm{proj}}
+\newcommand{\res}{\textrm{res}}
+
+
+
+
+
+
+\newcommand{\vttgu}{\vtt(\Gamma,u)}
+\newcommand{\vttG}{ V_{\tau\tau }^{( G)}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+ 
+\newcommand{\mM}{\mathcal{M}}
+%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\Sigwt}{ \Sigma_{ W \tau}}
+\newcommand{\Sigtw}{ \Sigma_{ \tau W}}
+\newcommand{\SigWw}{ \Sigma_{ W w}}
+\newcommand{\SigwW}{ \Sigma_{ w W}}
+%%%%%%%%%%%%%%%%%%
+\newcommand{\vttP}{\vtt^{\|}}
+\newcommand{\vttR}{\vtt^{\perp}}
+\newcommand{\vttRG}{\vtt^{\perp (  G)}}
+\newcommand{\vttRO}{\vtt^{\perp (  \Omega)}}
+\newcommand{\vttRC}{\vtt^{\perp (  C)}}
+\newcommand{\vttRQ}{\vtt^{\perp (\cs)}}
+\newcommand{\vttPG}{\vtt^\para ( G)}
+\newcommand{\vttPB}{\vtt^{\| ( B)}}
+\newcommand{\vttPGp}{\vtt^{\| (\Gp)}}
+\newcommand{\vttPC}{\vtt^{\| ( C)}}
+\newcommand{\vttPu}{ V_{ \tau \tau,u}^{\| }}
+\newcommand{\vttRu}{ V_{ \tau \tau,u}^{\perp }}
+\newcommand{\vttPw}{ V_{ \tau \tau,w}^{\| }}
+\newcommand{\vttRw}{ V_{ \tau \tau,w}^{\perp }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\vttPuPx}{ V_{ \tau \tau}^{\| z\|  w}}
+\newcommand{\vttPuRx}{ V_{ \tau \tau}^{\| z\perp w}}
+\newcommand{\vttRuPx}{ V_{ \tau \tau}^{\perp z\| w}}
+\newcommand{\vttRuRx}{ V_{ \tau \tau}^{\perp z\perp w}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\vttPGPB}{ V_{ \tau \tau}^{\| G\|  B}}
+\newcommand{\vttPGRB}{ V_{ \tau \tau}^{\| G\perp B}}
+\newcommand{\vttRGPB}{ V_{ \tau \tau}^{\perp G\| B}}
+\newcommand{\vttRGRB}{ V_{ \tau \tau}^{\perp G\perp B}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\vttPx}{ V_{ \tau \tau}^{\|  w}}
+\newcommand{\vttRx}{ V_{ \tau \tau}^{\perp  w}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newcommand{\asim}{\sim_\infty}
+%\newcommand{\approxi}{\overset{\cdot}{\sim}}
+\newcommand{\asim}{\overset{\cdot}{\sim}}
+\newcommand{\approxi}{\overset{\cdot}{\approx}}
+
+
+\newcommand{\aperp}{\perp^\infty}
+\newcommand{\projw}{\proj_{\hbd}}
+\newcommand{\proju}{\proj_{\hdu}}
+\newcommand{\resu}{\res_{\hdu}}
+\newcommand{\projwC}{\proj_{\hbdC}}
+\newcommand{\projz}{\proj_{\hdu  }}
+\newcommand{\resw}{\res_{\hbd}}
+\newcommand{\resz}{\res_{\hdu  }}
+\newcommand{\Ew}{E_{\hbd}}
+\newcommand{\Eu}{E_{\hdu  }}
+\newcommand{\covw}{\cov_{\hbd}}
+\newcommand{\covwC}{\cov_{\hbdC}}
+\newcommand{\covu}{\cov_{\hdu  }}
+
+\newcommand{\Sxx}{ S_{\delta\delta}}
+\newcommand{\Stw}{ S_{\tau\delta}}
+\newcommand{\Swt}{ S_{\delta\tau}}
+\newcommand{\Sqq}{S_{qq}}
+\newcommand{\Sqw}{ S_{q w}}
+\newcommand{\Swq}{ S_{ w q}}
+
+
+\newcommand{\Yp}{Y^{\|}}
+\newcommand{\Yr}{Y^{\perp}}
+\newcommand{\Sp}{S^{\|}}
+
+\newcommand{\vp}{ V^\| }
+\newcommand{\vr}{ V^{\perp}}
+\newcommand{\mT}{\mathcal{T}}
+\newcommand{\mF}{\mathcal{F}}
+\newcommand{\mK}{\mathcal{K}}
+\newcommand{\mZ}{\mathcal{Z}}
+\newcommand{\mQ}{\mathcal{Q}}
+\newcommand{\mL}{{\mathcal{L}}}
+\newcommand{\mB}{{\mathcal{B}}}
+\newcommand{\mR}{\mathbb{R}}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\dbA}{\dot{ G}}
+
+\def\begina{\begin{eqnarray*}}
+\def\enda{\end{eqnarray*}}
+\def\beginy{\begin{eqnarray}}
+\def\endy{\end{eqnarray}}
+\def\begine{\begin{enumerate}}
+\def\ende{\end{enumerate}}

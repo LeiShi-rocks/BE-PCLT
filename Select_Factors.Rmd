@@ -1,0 +1,1649 @@
+---
+title: "Large_Q_small_Nz"
+author: "Lei Shi"
+date: "11/18/2021"
+output: pdf_document
+---
+
+## Preliminaries
+
+```{r echo=FALSE}
+library("dplyr")
+options(dplyr.summarise.inform = FALSE)
+
+library("ggplot2")
+library("tidyverse")
+if(!require("AlgDesign")){
+  install.packages("AlgDesign")
+  library("AlgDesign")
+}
+library("car")
+library("glmnet")
+
+source("auxillary_functions.R")
+setwd("~/Desktop/Research/Best_Factor_Combination")
+```
+
+## Generate a factorial design 
+
+Use the function: factor.design()
+
+Example codes of running the factor.design() function:
+```{r include=FALSE}
+# generate a 2^4 balanced design with 1 unit in each treatment arm
+design_0 <- factor.design(1L, c(10, 10))
+design_0
+
+# generate a 2^4 balanced design with 1 unit in each treatment arm
+design_1 <- factor.design(4L, rep(1, 2^4))
+design_1
+
+# further add all 2-way interactions
+design_1_int <- factor.design(4L, rep(1, 2^4), 2)
+design_1_int
+
+# generate a 2x3x4 balanced design with 1 unit per arm
+levels <- c(2,3,4)
+trt_group_size <- rep(1, prod(levels))
+design_2 <- factor.design(levels, trt_group_size)
+design_2
+
+# generate a 2^3 balanced design with the random subgroup specification:
+N <- 1000L
+random_split <- runif(8)
+trt_group_size <- floor(N * random_split/sum(random_split))
+trt_group_size <- c(trt_group_size[1:7], N-sum(trt_group_size[1:7]))
+
+design_3 <- factor.design(3L, trt_group_size)
+design_3
+
+```
+## Generate a finite population:
+
+Generate a finite population $Y_i(z)$ using the function: finite.pop()
+
+
+Test the finite population generation code:
+```{r include=FALSE}
+# generate a finite population for a balanced 2^4 design with iid N(0,1)
+pop_1 <- finite.pop(2^4, 2^4, NULL)
+pop_1
+
+# generate a finite population for a balanced 2^4 design with N(mean, 1)
+opts <- list()
+opts$dist <- rep("norm", 2^4)
+opts$avg <- sin((1:2^4)*pi)
+opts$std <- rep(1, 2^4)
+pop_2 <- finite.pop(1600, 2^4, opts)
+pop_2
+
+colMeans(pop_2)
+opts$avg
+
+# generate a finite population for a balanced 2^4 design with N(mean, 1) with pre-specified factorial effect sizes
+num_factors <- 4
+num_pop <- 2^4
+num_trt_group <- 2^4
+
+opts <- list()
+opts$dist <- rep("norm", num_pop)
+opts$avg <- rep(0, num_pop)
+opts$std <- rep(1, num_pop)
+
+opts$ctrMatFlag <- TRUE
+opts$effects <- rep(0, num_trt_group)
+opts$effects[1:3] <- c(1, 2, 0.5)
+
+pop_2 <- finite.pop(num_pop, num_trt_group, opts)
+pop_2
+
+colMeans(pop_2)
+opts$avg
+```
+
+## Generate a factorial experiment dataset
+
+Test out the function factorial.data():
+
+```{r}
+# Generate binary factorial experiment data 
+finite.pop.opts <- list(
+  dist = rep("norm", 2^4),
+  avg = cos((1:2^4)*pi),
+  std = rep(1, 2^4)
+)
+finite.pop.init <- list(
+  finite.pop.opts = finite.pop.opts
+)
+
+factorial.data.opts <- list()
+
+dataIn <- factorial.data(4L, rep(100, 2^4), pop = NULL, factorial.data.opts, finite.pop.init)
+```
+
+
+
+
+
+
+
+## Generate a new trial
+Generate a new trial using function: trial.run(). See later parts for examples on how to use this function. 
+
+
+## Bonferroni correction based model selection
+
+This is an interesting coding practice! How do you want to encode strong heredity and weak heredity in general? 
+
+Run some trials on the codebook generation:
+```{r}
+# test heredity.proceed() :
+result <- heredity.proceed(4, c("F1.F2", "F1.F3", "F2.F3"), 2, "strong")
+result
+```
+
+
+
+Introduce a layer-wise model selection procedure; for example, Bonferroni correction, or LASSO. 
+
+Test out the model selection code:
+```{r}
+# No test model
+X <- matrix(rnorm(1000), nrow = 100)
+colnames(X) <- paste0("F", 1:10)
+beta <- c(c(1,2), rep(0, 8))
+epsilon <- 0.5 * rnorm(100)
+y <- X %*% beta + epsilon
+dataIn <- data.frame(y, X)
+
+model.selection.opts <- list(
+  alpha = 0.05,
+  robust.flag = TRUE,
+  correction.type = "hc0"
+)
+raw_model_Bonferroni <- model.selection(dataIn, paste0("F", 1:10), wt = rep(1,100), method = "Bonferroni", model.selection.opts)
+
+raw_model_LASSO <- model.selection(dataIn, paste0("F", 1:10), wt = rep(1,100), method = "LASSO", model.selection.opts)
+
+
+raw_model_Bonferroni$post_working_model
+
+raw_model_LASSO$post_working_model
+```
+
+Another test based on a prespecified test_model:
+```{r}
+# Prespecified test model
+X <- matrix(rnorm(1000), nrow = 100)
+colnames(X) <- paste0("F", 1:10)
+beta <- c(c(1,2), rep(0, 8))
+epsilon <- 0.5 * rnorm(100)
+y <- X %*% beta + epsilon
+dataIn <- data.frame(y, X)
+
+model.selection.opts <- list(
+  test_model = c("F1", "F3"),
+  alpha = 0.05,
+  robust.flag = TRUE,
+  correction.type = "hc0"
+)
+raw_model_Bonferroni <- model.selection(dataIn, paste0("F", 1:10), wt = rep(1,100), method = "Bonferroni", model.selection.opts)
+
+raw_model_LASSO <- model.selection(dataIn, paste0("F", 1:10), wt = rep(1,100), method = "LASSO", model.selection.opts)
+
+
+raw_model_Bonferroni$post_working_model
+
+raw_model_LASSO$post_working_model
+```
+
+
+
+
+## Perform forward model selection:
+
+
+Test out the forward selection procedure:
+```{r}
+# Generate binary factorial experiment data with 4 factors
+finite.pop.opts <- list(
+  dist = rep("norm", 2^4),
+  avg = cos((1:2^4)*pi),
+  std = rep(1, 2^4)
+)
+finite.pop.init <- list(
+  finite.pop.opts = finite.pop.opts
+)
+
+factorial.data.opts <- list()
+
+dataIn <- factorial.data(4L, rep(100, 2^4), factorial.data.opts, finite.pop.init)
+
+# parameter initialization
+factorial_data <- dataIn$factorial_data
+alpha.vec <- c(0.025, 0.025)
+wt <- NULL
+level <- 2L
+forward.select.opts <- list()
+heredity.proceed.init <- list(
+  criterion = "full"
+)
+model.selection.opts <- list(
+  correction.type = "hc0",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+
+forward.results <- forward.select(factorial_data, alpha.vec, wt, level, forward.select.opts, heredity.proceed.init, model.selection.init)
+```
+
+
+
+
+## Select the best factor combinations
+
+
+
+Test out the factor selection codes:
+```{r}
+#
+X1 <- rnorm(100, mean = 10)
+X2 <- rnorm(100, mean = 8)
+X3 <- rnorm(100, mean = 8)
+X4 <- rnorm(100, mean = 5)
+X5 <- rnorm(100, mean = 4)
+X6 <- rnorm(100, mean = 3)
+X  <- cbind(X1, X2, X3, X4, X5, X6)
+
+point.estimates <- colMeans(X)
+covariance.est <- diag(diag(var(X)))/100
+num.ties <- 2
+threshold <- 100^(-0.25)
+threshold.CL <- rep(1.0, num.ties)
+threshold.CR <- rep(1.0, num.ties)
+
+factor.comb(point.estimates, covariance.est, num.ties, threshold, threshold.CL, threshold.CR)
+```
+
+
+
+## Trials for Large-Q-small-Nz paper:
+```{r trial-1, eval=FALSE, include=FALSE}
+# Run trial 1
+# generate a 2^10 design with 1 unit per arm:
+arg_list <- list()
+arg_list$levels <- 10L
+arg_list$trt_group_size <- rep(1, 2^10)
+arg_list$niter <- 500
+arg_list$alpha <- 0.05
+
+# for finite.pop()
+opts <- list()
+#opts$dist <- rep("norm", 2^10)
+#opts$avg <- sin(1:2^10)
+#opts$std <- rep(1, 2^10)
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F1", "F2", "F3")
+
+# for hccm correction type
+arg_list$correction_type <- "hc0"
+
+## run trial
+res.logging <- trial.run(arg_list)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+
+
+```{r trial-2, eval=FALSE, include=FALSE}
+# Run trial 2
+## generate a 2^10 design with 1 unit per arm:
+arg_list <- list()
+arg_list$levels <- 10L
+arg_list$trt_group_size <- rep(1, 2^10)
+arg_list$niter <- 500
+arg_list$alpha <- 0.05
+
+# for finite.pop()
+opts <- list()
+opts$dist <- rep("norm", 2^10)
+opts$avg <- cos((1:2^10)*pi)
+opts$std <- rep(1, 2^10)
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F2", "F3", "F4", "F5")
+
+# for hccm correction type
+arg_list$correction_type <- "hc2"
+
+## run trial
+res.logging <- trial.run(arg_list)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+
+
+```{r trial-3, eval=FALSE, include=FALSE}
+# Run trial 3
+## generate a 2^10 design with 1 unit per arm:
+## Consider two-way interactions this time
+set.seed(256)
+arg_list <- list()
+arg_list$levels <- 10L
+arg_list$trt_group_size <- rep(1, 2^10)
+arg_list$niter <- 5000
+arg_list$alpha <- 0.05
+arg_list$interactions <- 3L
+
+# for finite.pop()
+opts <- list()
+#opts$dist <- rep("unif", 2^10)
+#opts$avg <- cos((1:2^10)*pi)
+#opts$std <- rep(1, 2^10)
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F1", "F2", "F3", "F1.F2", "F1.F3", "F2.F3", "F1.F2.F3")
+
+# for hccm correction type
+arg_list$correction_type <- "hc2"
+
+## run trial
+res.logging <- trial.run(arg_list, print.flag = FALSE, verbose = FALSE)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+```{r trial-4, eval=FALSE, include=FALSE}
+# Run trial 4
+## generate a 2^10 design with 1 unit per arm:
+## Consider uniform potential outcomes so that we have boundedness
+set.seed(256)
+arg_list <- list()
+arg_list$levels <- 10L
+arg_list$trt_group_size <- rep(1, 2^10)
+arg_list$niter <- 5000
+arg_list$alpha <- 0.05
+arg_list$interactions <- 3L
+
+# for finite.pop()
+opts <- list()
+opts$dist <- rep("unif", 2^10)
+opts$min <- rep(-1, 2^10)
+opts$max <- rep(1, 2^10)
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F1", "F2", "F3", "F1.F2", "F1.F3", "F2.F3", "F1.F2.F3")
+
+# for hccm correction type
+arg_list$correction_type <- "hc2"
+
+## run trial
+res.logging <- trial.run(arg_list, print.flag = FALSE, verbose = FALSE)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+
+```{r trial-5, eval=FALSE, include=FALSE}
+# Run trial 5
+## generate a 2^10 design with 1 unit per arm:
+## Consider uniform potential outcomes so that we have cauchy distribution
+
+arg_list <- list()
+arg_list$levels <- 10L
+arg_list$trt_group_size <- rep(1, 2^10)
+arg_list$niter <- 500
+arg_list$alpha <- 0.05
+arg_list$interactions <- 2L
+
+# for finite.pop()
+opts <- list()
+opts$dist <- rep("t", 2^10)
+opts$df <- rep(1, 2^10)
+
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F1", "F2", "F3", "F1.F2", "F1.F3", "F2.F3")
+
+# for hccm correction type
+arg_list$correction_type <- "hc2"
+
+## run trial
+res.logging <- trial.run(arg_list, print.flag = FALSE, verbose = FALSE)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+
+
+
+```{r trial-6, eval=FALSE, include=FALSE}
+# Run trial 6
+## generate a 2^10 design with 1 unit per arm:
+## Consider uniform potential outcomes so that we have t(2) distribution
+
+arg_list <- list()
+arg_list$levels <- 10L
+arg_list$trt_group_size <- rep(1, 2^10)
+arg_list$niter <- 500
+arg_list$alpha <- 0.05
+arg_list$interactions <- 2L
+
+# for finite.pop()
+opts <- list()
+opts$dist <- rep("t", 2^10)
+opts$df <- rep(2, 2^10)
+
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F1", "F2", "F3", "F1.F2", "F1.F3", "F2.F3")
+
+# for hccm correction type
+arg_list$correction_type <- "hc2"
+
+## run trial
+res.logging <- trial.run(arg_list, print.flag = FALSE, verbose = FALSE)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+
+```{r trial-7, eval=FALSE, include=FALSE}
+# Run trial 7
+## generate a 2^10 design with 1 unit per arm:
+arg_list <- list()
+arg_list$levels <- 6L
+arg_list$trt_group_size <- rep(c(1, 3, 5, 7), 2^4)
+arg_list$niter <- 500
+arg_list$alpha <- 0.05
+
+# for finite.pop()
+opts <- list()
+opts$dist <- rep("norm", 2^6)
+opts$avg <- cos((1:2^6)*pi)
+opts$std <- rep(1, 2^6)
+
+arg_list$opts <- opts
+
+# for model
+arg_list$model <- c("F2", "F3", "F4", "F5")
+# arg_list$wt <- 1/rep(arg_list$trt_group_size, arg_list$trt_group_size)
+
+# for hccm correction type
+arg_list$correction_type <- "hc2"
+
+## run trial
+res.logging <- trial.run(arg_list)
+
+## post processing
+coverage.percent <- check.coverage(res.logging)
+coverage.percent
+
+## check asymptotic normality
+plot.estimate <- check.normal(res.logging)
+plot.estimate
+
+## check point estimates
+plot.point.estimate <- check.points(res.logging)
+plot.point.estimate
+```
+
+
+
+## Simulation for best factor combination selection
+
+### Weak heredity structure
+
+1. Determine the factorial effect sizes.
+```{r}
+# basic parameter setup
+K <- 5
+num_trt_group <- 2^K
+trt_group_size <- rep(100, 2^K)
+num_pop <- sum(trt_group_size)
+
+# seed 
+set.seed(2022)
+
+# main effects
+tau <- runif(3, 1, 5) * sign(runif(3,-1,1))
+tau <- c(tau, 0, 0)
+
+# interactions
+tau <- c(tau, runif(9, 1, 5) * sign(runif(9,-1,1)) * rbinom(9, 1, 0.7), 0, rep(0, 2^K-1-15))
+
+# add intercept
+tau <- c(0, tau)
+
+# seed = 2022
+# tau <- c(0.000000,  4.263911, -3.589037,  1.481314, 0.000000, 0.000000, -1.297196, 0.000000, 2.481268, 0.000000,  1.007448,  0.000000,  1.578967, -3.077587, -3.437906, rep(0, 2^K-1-15))
+weak.design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+weak.data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+weak.design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+
+
+```
+
+
+
+2. generate a finite population and factorial data
+```{r}
+mu <- as.matrix(weak.design.core) %*% (tau[2:16])
+
+# finite.pop initialization
+finite.pop.opts <- list()
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rep(1, 2^6)
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# factorial.data opts
+factorial.data.opts <- list()
+
+weak.factorial.data <- factorial.data(K, trt_group_size, pop = NULL, factorial.data.opts, finite.pop.init)
+```
+
+
+
+3. model selection
+```{r}
+# initialization
+factorial_data <- weak.factorial.data$factorial_data
+alpha.vec <- c(0.025, 0.025)
+level <- 2L
+```
+
+```{r}
+# ==== FULL BONFERRONI ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "full"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc0",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.full <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, heredity.proceed.init, model.selection.init)
+weak.selected.model.full
+```
+
+
+```{r}
+# ==== WEAK BONFERRONI ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "weak"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc0",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.weak <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.weak
+```
+
+
+```{r}
+# ==== Strong BONFERRONI ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "strong"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc0",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.strong <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.strong
+```
+
+
+```{r}
+# ==== FULL LASSO ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "full"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "LASSO",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.flasso <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.flasso
+```
+
+
+
+```{r}
+# ==== weak LASSO ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "weak"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "LASSO",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.wlasso <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts,  heredity.proceed.init, model.selection.init)
+weak.selected.model.wlasso
+```
+
+
+```{r}
+# ==== strong LASSO ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "strong"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "LASSO",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.slasso <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.slasso
+```
+
+```{r}
+wt <- factorial_data %>% group_by(across(c(-y))) %>% 
+          mutate(num=n()) %>% ungroup() %>% 
+          mutate(inv_num = num_pop/num) %>% 
+          dplyr::select(inv_num)
+wt <- wt$inv_num
+        
+running.factorial_data <- cbind(y = factorial_data$y, weak.design.run)
+pre_selected_model <- names(subset(running.factorial_data, select = -y))
+select.model.output <- model.selection(running.factorial_data, 
+                                       pre_selected_model, 
+                                       wt = wt,
+                                       method = "LASSO")
+
+        
+# factor level combination selection
+selected.model <- select.model.output$post_working_model
+post.design.run <- dplyr::select(weak.design.run, selected.model)
+post.design.core <- dplyr::select(weak.design.core, selected.model)
+post.factorial.data <- cbind(y = factorial_data$y, post.design.run)
+lm.post <- lm(y~., data = post.factorial.data)
+sigma.post <- hccm(lm.post, "hc0")
+        
+Y.hat.post <- as.matrix(cbind(1, post.design.core)) %*% lm.post$coefficients 
+var.post <- as.matrix(cbind(1, post.design.core)) %*% sigma.post %*% t(as.matrix(cbind(1, post.design.core)))
+        
+#factor.selection.post <- factor.comb(Y.hat.post, var.post, num.ties = 2, 
+#                                     threshold, threshold.CL, threshold.CR)
+```
+
+
+
+4. select the best factor combinations
+
+```{r}
+num.ties <- 2 # H0
+delta <- 0.25 # 
+threshold <- 100^(-delta) 
+threshold.CL <- rep(1.0, num.ties)
+threshold.CR <- rep(1.0, num.ties)
+```
+
+```{r}
+## BRUTAL RANKING
+point.estimates <- factorial_data %>% group_by(F5, F4, F3, F2, F1) %>%
+  summarise(avg.est = mean(y)) 
+covariance.est <- factorial_data %>% group_by(F5, F4, F3, F2, F1) %>%
+  summarise(var.est = var(y))
+covariance.est <- diag(covariance.est$var.est) / 100
+
+Y.hat.post.brutal <- point.estimates$avg.est
+var.post.brutal <- covariance.est
+
+weak.factor.selection.brutal <- factor.comb(Y.hat.post.brutal, var.post.brutal, num.ties, threshold, threshold.CL, threshold.CR)
+```
+
+```{r}
+## POST MODEL SELECTION RANKING
+selected.model <- weak.selected.model.weak$selected_model
+post.design.run <- dplyr::select(weak.design.run, selected.model)
+post.design.core <- dplyr::select(weak.design.core, selected.model)
+post.factorial.data <- cbind(y = factorial_data$y, post.design.run)
+lm.post <- lm(y~ -1 + ., data = post.factorial.data)
+sigma.post <- hccm(lm.post, "hc2")
+
+Y.hat.post.weak <- as.matrix(post.design.core) %*% lm.post$coefficients 
+var.post.weak <- as.matrix(post.design.core) %*% sigma.post %*% t(as.matrix(post.design.core))
+  
+weak.factor.selection.post <- factor.comb(Y.hat.post.weak, var.post.weak, num.ties, 
+                        threshold, threshold.CL, threshold.CR)
+
+```
+
+
+
+### Strong heredity structure
+
+1. Determine the factorial effect sizes.
+```{r}
+# basic parameter setup
+K <- 5
+
+set.seed(2022)
+# main effects
+tau <- runif(3, 1, 5) * sign(runif(3,-1,1))
+tau <- c(tau, 0, 0)
+
+# interactions
+tau <- c(tau, runif(9, 1, 5) * sign(runif(9,-1,1)) * rbinom(9, 1, 0.7), 0, rep(0, 2^K-1-15))
+
+# add intercept
+tau <- c(0, tau)
+
+# seed = 2022
+# tau <- c(0.000000,  4.263911, -3.589037,  1.481314, 0.000000, 0.000000, -1.297196, 0.000000, 2.481268, 0.000000, 1.007448,  0.000000,  1.578967, -3.077587, -3.437906, rep(0, 2^K-1-15))
+
+
+```
+
+
+2. generate a finite population and factorial data
+```{r}
+factorial_data <- weak.factorial.data$factorial_data
+alpha.vec <- c(0.025, 0.025)
+level <- 2L
+```
+
+
+
+
+## Numerical simulations
+
+### Weak heredity
+
+1. Determine the factorial effect sizes.
+```{r}
+# basic parameter setup
+K <- 5
+num_trt_group <- 2^K
+trt_group_size <- rep(100, 2^K)
+num_pop <- sum(trt_group_size)
+
+design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+# seed 
+set.seed(2022)
+
+tau <- c(
+  runif(choose(K,0), 1, 5) * sign(runif(choose(K,0),-1, 1)),
+  runif(choose(K,1), 1, 5) * sign(runif(choose(K,1),-1, 1)),
+  runif(choose(K,2), 1, 5) * sign(runif(choose(K,2),-1, 1)) * rbinom(choose(K,2), 1, 0.7)
+)
+
+
+# effects
+names(tau) <- c("(Intecept)", names(design.core))
+
+# non-zeros
+nonzero.effect <- paste0("F", 1:3)
+nonzero.effect <- c(nonzero.effect, 
+                    heredity.proceed(K, nonzero.effect, 1, "weak")$working_model)
+zero.effect <- setdiff(names(tau), nonzero.effect)
+tau[zero.effect] <- 0
+
+
+# seed = 2022
+# tau <- c(0.000000,  4.263911, -3.589037,  1.481314, 0.000000, 0.000000, -1.297196, 0.000000, 2.481268, 0.000000,  1.007448,  0.000000,  1.578967, -3.077587, -3.437906, rep(0, 2^K-1-15))
+
+tau
+```
+
+
+
+2. generate a finite population and factorial data
+```{r}
+mu <- as.matrix(design.core) %*% (tau[2:16])
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rep(1, 2^K)
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+
+# factorial.data opts
+factorial.data.opts <- list()
+
+# factorial.data init
+factorial.data.init <- list(
+  num_factors = K,
+  trt_group_size = trt_group_size,
+  pop = pop_1,
+  factorial.data.opts = factorial.data.opts,
+  finite.pop.init = list()
+)
+
+# factorial.data <- factorial.data(K, trt_group_size, pop = pop_1,
+#                                 factorial.data.opts, finite.pop.init)
+
+# factorial_data <- factorial.data$factorial_data
+alpha.vec <- c(0.025, 0.025)
+level <- 2L
+```
+
+
+
+3. run trials
+```{r}
+simulation.res.weak <- comb.select.trial(factorial.data.init, 
+                                    alpha.vec = alpha.vec, 
+                                    level = level, 
+                                    design.run, design.core,
+                                    Niter = 2L, num.ties = 2)
+```
+
+4. summarize the results
+```{r}
+simulation.res.weak$model.select.res
+```
+
+```{r}
+simulation.res.weak$comb.select.res
+```
+
+```{r}
+simulation.res.weak$brutal.select.res
+```
+
+
+
+############################
+After finishing running the code, load data and analyze the .RData as follows:
+```{r}
+simulation.save.weak <- readRDS("simulation_save_weak.RData")
+simulation.save.strong <- readRDS("simulation_save_strong.RData")
+simulation.save.largeQ<- readRDS("simulation_save_largeQ.RData")
+
+simulation.res.weak <- simulation.save.weak$simulation.res.weak
+simulation.res.strong <- simulation.save.strong$simulation.res.strong
+simulation.res.largeQ <- simulation.save.strong$simulation.res.largeQ
+```
+
+
+
+
+### Analysis under weak heredity
+```{r}
+# model selection
+#readRDS("simulation_save_weak.RData")
+correct.model <- names(simulation.save.weak$tau[abs(simulation.save.weak$tau)>1e-6])
+model.selection.report.weak <- 
+  check.model.selection(simulation.res.weak$model.select.res, correct.model)
+model.selection.report.weak/500
+```
+
+
+```{r}
+# factor combination selection
+#readRDS("simulation_save_weak.RData")
+correct.comb <- list(
+  effect = mean(simulation.save.weak$mu[abs(simulation.save.weak$mu)>16]),
+  indices = which(abs(simulation.save.weak$mu)>16) 
+)
+
+comb.selection.report.weak <- 
+  check.comb.selection(simulation.res.weak$comb.select.res, 
+                       simulation.res.weak$brutal.select.res, 
+                       tie.ind = 1,
+                       correct.comb)
+
+comb.selection.report.weak
+comb.selection.report.weak[, 1:3]
+```
+
+
+
+### Strong heredity
+
+1. Determine the factorial effect sizes.
+```{r}
+# basic parameter setup
+K <- 5
+num_trt_group <- 2^K
+trt_group_size <- rep(100, 2^K)
+num_pop <- sum(trt_group_size)
+
+design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+# seed 
+set.seed(2022)
+
+tau <- c(
+  runif(choose(K,0), 1, 5) * sign(runif(choose(K,0),-1, 1)),
+  runif(choose(K,1), 1, 5) * sign(runif(choose(K,1),-1, 1)),
+  runif(choose(K,2), 1, 5) * sign(runif(choose(K,2),-1, 1)) * rbinom(choose(K,2), 1, 0.7)
+)
+
+
+# effects
+names(tau) <- c("(Intecept)", names(design.core))
+
+# non-zeros
+nonzero.effect <- paste0("F", 1:3)
+nonzero.effect <- c(nonzero.effect, 
+                    heredity.proceed.new(K, nonzero.effect, 1,
+                                         "strong")$working_model)
+zero.effect <- setdiff(names(tau), nonzero.effect)
+tau[zero.effect] <- 0
+
+
+# seed = 2022
+# tau <- c(0.000000,  4.263911, -3.589037,  1.481314, 0.000000, 0.000000, -1.297196, 0.000000, 2.481268, 0.000000,  1.007448,  0.000000,  1.578967, -3.077587, -3.437906, rep(0, 2^K-1-15))
+
+tau
+```
+
+
+
+2. generate a finite population and factorial data
+```{r}
+mu <- as.matrix(design.core) %*% (tau[2:16])
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rep(1, 2^K)
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+# factorial.data opts
+factorial.data.opts <- list()
+
+# factorial.data init
+factorial.data.init <- list(
+  num_factors = K,
+  trt_group_size = trt_group_size,
+  pop = pop_1,
+  factorial.data.opts = factorial.data.opts,
+  finite.pop.init = list()
+)
+
+# factorial.data <- factorial.data(K, trt_group_size, pop = pop_1,
+#                                 factorial.data.opts, finite.pop.init)
+
+# factorial_data <- factorial.data$factorial_data
+alpha.vec <- c(0.025, 0.025)
+level <- 2L
+```
+
+
+
+3. run trials
+```{r}
+simulation.res.strong <- comb.select.trial(factorial.data.init, 
+                                        alpha.vec = alpha.vec, 
+                                        level = level, 
+                                        design.run, design.core,
+                                        Niter = 1, num.ties = 2)
+```
+
+4. summarize the results
+```{r}
+simulation.res.strong$model.select.res
+```
+
+```{r}
+simulation.res.strong$comb.select.res
+```
+
+```{r}
+simulation.res.strong$brutal.select.res
+```
+
+
+### Analysis under strong heredity
+```{r}
+# model selection
+correct.model <- names(simulation.save.strong$tau[abs(simulation.save.strong$tau)>1e-6])
+model.selection.report.strong <- 
+  check.model.selection(simulation.res.strong$model.select.res, correct.model)
+model.selection.report.strong/500
+```
+
+
+```{r}
+# factor combination selection
+#readRDS("simulation_save_strong.RData")
+correct.comb <- list(
+  effect = mean(simulation.save.strong$mu[abs(simulation.save.strong$mu)>14]),
+  indices = which(abs(simulation.save.strong$mu)>14) 
+)
+
+comb.selection.report.strong <- 
+  check.comb.selection(simulation.res.strong$comb.select.res, 
+                       simulation.res.strong$brutal.select.res, 
+                       tie.ind = 1,
+                       correct.comb)
+
+comb.selection.report.strong/500
+```
+
+
+
+### Large Q small Nz
+
+1. Determine the factorial effect sizes.
+```{r}
+# basic parameter setup
+K <- 10
+num_trt_group <- 2^K
+trt_group_size <- rep(2, 2^K)
+num_pop <- sum(trt_group_size)
+
+design.core <- factor.design(K, trt_group_size = rep(1, 2^K), 
+                             interaction = 3, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, 
+                            interaction = 3, centering = 1/2)
+
+# seed 
+set.seed(2022)
+
+# non-zeros
+full.effect.main <- paste0("F", 1:K)
+nonzero.effect.main <- paste0("F", 1:K)
+zero.effect.main <- setdiff(full.effect.main, nonzero.effect.main)
+effect.main <- runif(choose(K,1), 0.5, 1) * sign(runif(choose(K,1), -1, 1))
+names(effect.main) <- full.effect.main
+effect.main[zero.effect.main] <- 0
+
+
+full.effect.twoway <- heredity.proceed.new(K, full.effect.main, 
+                                         1, "strong")$working_model # don't change!!
+nonzero.effect.twoway <- heredity.proceed.new(K, nonzero.effect.main, 
+                                         1, "strong")$working_model
+zero.effect.twoway <- setdiff(full.effect.twoway, nonzero.effect.twoway)
+effect.twoway <- runif(choose(K,2), 0.4, 1) * sign(runif(choose(K,2), -1, 1)) * rbinom(choose(K,2), 1, 0.5) * 0.3
+names(effect.twoway) <- full.effect.twoway
+effect.twoway[zero.effect.twoway] <- 0
+nonzero.effect.twoway <- names(effect.twoway[abs(effect.twoway) > 1e-5])
+
+
+full.effect.threeway <- heredity.proceed.new(K, full.effect.twoway, 
+                                         2, "strong")$working_model # don't change!!
+nonzero.effect.threeway <- heredity.proceed.new(K, nonzero.effect.twoway, 
+                                         2, "strong")$working_model
+zero.effect.threeway <- setdiff(full.effect.threeway, nonzero.effect.threeway)
+effect.threeway <- runif(choose(K,3), 1.0, 1.0) * sign(runif(choose(K,3), -1, 1)) * rbinom(choose(K,3), 1, 0.5) * 0.15
+names(effect.threeway) <- full.effect.threeway
+effect.threeway[zero.effect.threeway] <- 0
+nonzero.effect.threeway <- names(effect.threeway[abs(effect.threeway) > 1e-5])
+
+
+tau <- c(0, effect.main, effect.twoway, effect.threeway)
+names(tau)[1] <- "(Intercept)"
+
+nonzero.effect <- names(tau[abs(tau) > 1e-5])
+# seed = 2022
+# tau <- c(0.000000,  4.263911, -3.589037,  1.481314, 0.000000, 0.000000, -1.297196, 0.000000, 2.481268, 0.000000,  1.007448,  0.000000,  1.578967, -3.077587, -3.437906, rep(0, 2^K-1-15))
+
+# tau
+```
+
+
+
+2. generate a finite population and factorial data
+```{r}
+mu <- as.matrix(design.core) %*% (tau[-1])
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rep(1, 2^K)
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+
+# factorial.data opts
+factorial.data.opts <- list()
+
+# factorial.data init
+factorial.data.init <- list(
+  num_factors = K,
+  trt_group_size = trt_group_size,
+  pop = pop_1,
+  factorial.data.opts = factorial.data.opts,
+  finite.pop.init = list()
+)
+
+# factorial.data <- factorial.data(K, trt_group_size, pop = pop_1,
+#                                 factorial.data.opts, finite.pop.init)
+
+# factorial_data <- factorial.data$factorial_data
+level <- 10L
+alpha.vec <- rep(0.05/level, level)
+# alpha.vec <- c(0.01, 0.01, 0.01, 0.01, 0.01)
+design.core <- factor.design(K, trt_group_size = rep(1, 2^K), interaction = level, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = level, centering = 1/2)
+```
+
+
+
+3. run trials
+```{r}
+simulation.res.weak <- comb.select.trial(factorial.data.init, 
+                                    alpha.vec = alpha.vec, 
+                                    level = level, 
+                                    design.run, design.core,
+                                    Niter = 1L, num.ties = 2, random.seed = 2021)
+```
+
+4. summarize the results
+```{r}
+nonzero.effect
+simulation.res.weak$model.select.res
+```
+
+```{r}
+print("TRUTH:")
+print(sort(mu, decreasing = TRUE)[1:3])
+print("VAR:")
+lapply(simulation.res.weak$comb.select.res[[1]]$FB, function(x){print(x$variance)})
+print("CI:")
+lapply(simulation.res.weak$comb.select.res[[1]]$FB, function(x){print(x$CI)})
+
+#simulation.res.weak$comb.select.res
+```
+
+```{r}
+print("TRUTH:")
+print(sort(mu, decreasing = TRUE)[1:3])
+print("VAR:")
+lapply(simulation.res.weak$brutal.select.res[[1]]$selected.ties, function(x){print(x$variance)})
+print("CI:")
+lapply(simulation.res.weak$brutal.select.res[[1]]$selected.ties, function(x){print(x$CI)})
+#simulation.res.weak$brutal.select.res
+```
+
+
+
+```{r}
+# Power of Bonferroni correction
+## effect size
+## number of samples for each p value
+## number of zero hypetheses
+## number of tests
+nn <- 20
+mm <- 1000
+mu <- c(rep(1, nn), rep(0, mm)) * 1
+#mu 
+
+test.stat <- rnorm(nn + mm, mean = sqrt(1) * mu, sd = 1.0)
+#test.stat 
+
+qtail <- qnorm(0.025/((nn)), lower.tail = FALSE)
+#qtail
+
+test.res <- as.numeric(abs(test.stat[1:nn]) >= qtail)
+#test.res
+
+#mu == test.res
+
+table(mu[1:nn], test.res)
+```
+
+
+```{r}
+# model selection
+correct.model <- names(simulation.save.largeQ$tau[abs(simulation.save.largeQ$tau)>1e-6])
+model.selection.report.largeQ <- 
+  check.model.selection(simulation.res.largeQ$model.select.res, correct.model)
+model.selection.report.largeQ
+```
+
+
+```{r}
+# factor combination selection
+#readRDS("simulation_save_strong.RData")
+correct.comb <- list(
+  effect = mean(simulation.save.largeQ$mu[abs(simulation.save.largeQ$mu)>14]),
+  indices = which(abs(simulation.save.largeQ$mu)>14) 
+)
+
+comb.selection.report.largeQ <- 
+  check.comb.selection(simulation.res.largeQ$comb.select.res, 
+                       simulation.res.largeQ$brutal.select.res, 
+                       tie.ind = 1,
+                       correct.comb)
+
+comb.selection.report.strong
+```
+## Data analysis for Select best factor combination paper
+
+
+### Fed_Exp: hiring discrimination data
+
+1. import dataset and preprocessing
+```{r}
+FieldExp_Public <- haven::read_dta('FieldExp_Public.dta')
+# View(FieldExp_Public)
+
+N <- FieldExp_Public %>% filter(occupation==6) %>% summarize(n()) # occupation 6: software engineers
+N <- as.numeric(N)
+delta <- c(0.5, 0.5, 0.5)
+level <- 2
+
+FEP_Run <- as.data.frame(FieldExp_Public %>% filter(occupation == 6) %>% 
+  dplyr::select(-id, -msa, -occupation))
+
+# callback, black, woman, parent
+colnames(FEP_Run) <- c("y", "F1", "F2", "F3")
+
+head(FEP_Run)
+
+
+```
+
+
+
+2. Forward model selection
+```{r}
+factorial_data <- FEP_Run
+alpha.vec <- c(0.025, 0.025)
+level <- 2L
+```
+
+
+```{r}
+# ==== FULL BONFERRONI ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "full"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.full <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, heredity.proceed.init, model.selection.init)
+
+weak.selected.model.full
+```
+
+```{r}
+# ==== WEAK BONFERRONI ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "weak"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.weak <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, heredity.proceed.init, model.selection.init)
+weak.selected.model.weak
+```
+
+
+```{r}
+# ==== Strong BONFERRONI ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "strong"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "Bonferroni",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.strong <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.strong
+```
+
+
+```{r}
+# ==== FULL LASSO ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "full"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "LASSO",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.flasso <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.flasso
+```
+
+
+
+```{r}
+# ==== weak LASSO ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "weak"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "LASSO",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.wlasso <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.wlasso
+```
+
+
+```{r}
+# ==== strong LASSO ====
+# model.selection.init <- list()
+
+# forward.select.opts
+forward.select.opts <- list()
+
+# heredity.proceed.init <- list()
+heredity.proceed.init <- list(
+  criterion = "weak"
+)
+
+# model.selection.init
+model.selection.opts <- list(
+  correction.type = "hc2",
+  robust.flag = TRUE
+)
+model.selection.init <- list(
+  method = "LASSO",
+  model.selection.opts = model.selection.opts
+)
+
+weak.selected.model.slasso <- forward.select(factorial_data, alpha.vec, wt = NULL, level, forward.select.opts, 
+                                           heredity.proceed.init, model.selection.init)
+weak.selected.model.slasso
+```
+
+3. 
+
+
+### NHANES: algriculture and pesticides
+
+1. Preprossessing the data 
+```{r}
+library(RNHANES)
+
+#files <- nhanes_data_files()
+#variables <- nhanes_variables()
+#nhanes_search(files, "pesticides", component == "laboratory", cycle == "2003-2004")
+Pest_C <- nhanes_load_data("L28OCP_C", "2003-2004")
+#View(nhanes_search(variables, "", data_file_name=="L28OCP_C"))
+
+Pest_Run <- Pest_C %>% dplyr::select(SEQN, LBDBHCLC,	LBXBHC, LBXBHCLA, LBDHPELC, LBXHPE, LBXHPELA, LBDMIRLC, LBXMIR, LBXMIRLA, LBDPDTLC, LBXPDT, LBXPDTLA) %>% dplyr::select(SEQN, LBDBHCLC, LBDHPELC, LBDMIRLC, LBDPDTLC) 
+#View(Pest_Run)
+Pest_Run[Pest_Run==1]=-1
+Pest_Run[Pest_Run==0]=1
+
+#Demo_C <- nhanes_load_demography_data("2003-2004")
+BMX_C <- nhanes_load_data("BMX_C", "2003-2004")
+OCQ_C <- nhanes_load_data("OCQ_C", "2003-2004")
+
+Pest_Run$BMXBMI <- BMX_C$BMXBMI[match(Pest_Run$SEQN, BMX_C$SEQN)]
+Pest_Run <- Pest_C_run %>% drop_na() %>% dplyr::select(-SEQN)
+
+View(Pest_Run)
+
+N <- Pest_C_run %>% summarize(n()) 
+N <- as.numeric(N)
+delta <- c(0.5, 0.5, 0.5, 0.5)
+level <- 2
+
+Pest_Run_y <- Pest_Run %>% dplyr::select(BMXBMI)
+Pest_Run_X <- Pest_Run %>% dplyr::select(-BMXBMI)
+```
+
+
+
+

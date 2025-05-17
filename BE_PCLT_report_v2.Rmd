@@ -1,0 +1,342 @@
+---
+title: "BE_PCLT_report"
+author: "Lei Shi"
+date: '2022-08-17'
+output: pdf_document
+---
+
+```{r, include=FALSE}
+library("dplyr")
+options(dplyr.summarise.inform = FALSE)
+
+library("ggplot2")
+library("tidyverse")
+if(!require("AlgDesign")){
+  install.packages("AlgDesign")
+}
+library("AlgDesign")
+if(!require("coop")){
+  install.packages("coop")
+}
+library("coop")
+library("car")
+library("glmnet")
+
+if (!require('Rcpp', quietly = TRUE)) { install.packages('Rcpp') } 
+library('Rcpp') # Load package 'Rcpp'
+ 
+if (!require('RcppArmadillo', quietly = TRUE)) { install.packages('RcppArmadillo') } 
+library('RcppArmadillo') # Load package 'RcppArmadillo'
+
+
+source("auxillary_functions.R")
+```
+
+
+```{r, include=F}
+# generate a factorial experiment
+# basic parameter setup
+K <- 10
+num_trt_group <- 2^K
+
+# design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = rep(1,2^K), 1)
+# design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+active_facs <- rowSums(data.ind)
+trt_group_size <- rep(1, 2^K)
+trt_group_size[1:660] <- 1
+trt_group_size[661:1010]  <- 2
+trt_group_size[1011:1024] <- 30
+num_pop <- sum(trt_group_size)
+
+Q_U <- 660 # unreplicated small arms
+Q_R <- 350  # replicated small arms
+Q_L <- 14 # large arms
+
+
+# generate factorial design
+design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+
+# generate factorial effects
+set.seed(2022)
+
+tau <- c(
+  runif(choose(K,0), 1, 5) * sign(runif(choose(K,0), -1, 1)),
+  runif(choose(K,1), 1, 5) * sign(runif(choose(K,1), -1, 1)),
+  runif(choose(K,2), 1, 5) * sign(runif(choose(K,2), -1, 1)) * rbinom(choose(K,2), 1, 0.7)
+)
+
+names(tau) <- c("(Intecept)", names(design.core))
+
+# non-zeros
+nonzero.effect <- paste0("F", 6:K)
+# nonzero.effect <- paste0("F", 1:2)
+nonzero.effect <- c(nonzero.effect, 
+                    heredity.proceed.new(K, nonzero.effect, 1,
+                                         "strong")$working_model)
+zero.effect <- setdiff(names(tau), nonzero.effect)
+tau[zero.effect] <- 0
+
+tau
+
+
+```
+
+
+```{r, include=F}
+# generate finite population
+mu <- as.matrix(design.core) %*% tau[-1]
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rbinom(2^K, 1, 0.5) + 1
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+pop_cov <- coop::covar(pop_1) 
+# very fast!! so much faster than cov()
+
+true_cov_Yhat <- diag(diag(pop_cov)/trt_group_size) - (1/num_pop) * pop_cov
+
+```
+
+
+```{r, include = F}
+# specify target effects and target design
+target_effect  <- c('F2', 'F4', 'F6', 'F8', 'F10')
+target_design  <- design.core[,target_effect]
+
+target_tau <- 1/2^K * t(as.matrix(target_design)) %*% mu
+
+```
+
+
+
+## Experiment setup
+
+- K = 10, number of factors
+- Q_U = 660, number of unreplicated arms, each with $N_q = 1$
+- Q_R = 350, number of small replicated arms, each with $N_q = 2$
+- Q_L = 14, number of large arms, each with $N_q = 30$.
+- N = 1780, population
+
+Generate data such that all the $k$-way ($k\ge 3$) interactions are zero. The mean for treatment arm $q$ is a function of $F_6,\dots,F_{10}$. The logic is that we assume $F_1,\dots,F_5$ are less important factors and $F_6, \dots, F_{10}$ are important ones. The pattern of the means: (the axis 'Index' is the arms ordered in lexicographical order)
+```{r}
+plot(mu)
+```
+
+The factorial effects in the first two levels:
+```{r}
+tau[abs(tau)>1e-4]
+```
+
+
+
+The true target effects and true variance for the WLS estimator:
+```{r}
+# population level:
+## tau
+cat("target_tau\n")
+target_tau
+cat("\n")
+
+## variance for the estimator
+cat("true variance\n")
+true_cov_tauhat <- t(as.matrix(target_design)) %*% true_cov_Yhat %*% as.matrix(target_design) / 1024^2
+true_cov_tauhat
+cat("\n")
+
+## True standard deviation
+cat("true sd\n")
+sqrt(diag(true_cov_tauhat))
+cat("\n")
+```
+
+
+
+
+
+Target effects we want to estimate: 'F2', 'F4', 'F6', 'F8', 'F10'
+
+
+## Numeric experiments
+
+In the first experiments, we run 1000 MC trials and report:
+
+- histogram of the point estimates
+- estimated standard deviation for 5 methods (see later parts on what these methods are)
+- 95%-CI coverage
+- 95% Wald CI coverage
+
+### Distribution of point estimates
+
+
+```{r}
+# report results
+record <- readRDS("record_OUTCOME.RData")
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record$rec_point_est)),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+summary_data <- data.frame(
+  target_tau = target_tau,
+  labs = factor(target_effect, levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+ggplot(hist_data, aes(x = est)) + 
+  facet_wrap(~labs, scales = 'free_x') +
+  geom_histogram() + 
+  geom_vline(data = summary_data, mapping = aes(xintercept = target_tau), col = 'red') # red lines are the true effects
+
+```
+
+Takeaways:
+
+- CLT holds even the design is highly non-uniform.
+
+### Expectation of the sd estimators
+
+We applied five methods for variance estimation:
+
+- wls_0: wls + homoskedastic var, with incorrect specification: $Y\sim F2+F4+F6+F8+F10$
+- ehw_0: wls + hc2 var, with incorrect specification: $Y\sim F2+F4+F6+F8+F10$
+- wls_1: wls + homoskedastic var, with correct specification; $Y\sim F2+F4+F6+F7+F8+F9+F10+F6.F9+F6.F10$
+- ehw_1: wls + hc2 var, with correct specification; $Y\sim F2+F4+F6+F7+F8+F9+F10+F6.F9+F6.F10$
+- lex:   lexicographical pairing
+
+```{r message=FALSE}
+# expectation of sd estimator
+print(data.frame(
+  true_sd   = sqrt(diag(true_cov_tauhat)),
+  wls_0_sd  = diag(apply(sqrt(record$rec_var_est_wls_0), MARGIN = c(1,2), sum))/1000,
+  ehw_0_sd  = diag(apply(sqrt(record$rec_var_est_ehw_0), MARGIN = c(1,2), sum))/1000,
+  wls_1_sd  = diag(apply(sqrt(record$rec_var_est_wls_1), MARGIN = c(1,2), sum))/1000,
+  ehw_1_sd  = diag(apply(sqrt(record$rec_var_est_ehw_1), MARGIN = c(1,2), sum))/1000,
+  lex_sd  = diag(apply(sqrt(record$rec_var_est_lex), MARGIN = c(1,2), sum))/1000
+))
+
+# true sd's:
+# 0.04368610 0.04368584 0.04368498 0.04368678 0.04368549 0.04368564
+```
+
+
+
+Takeaways:
+
+- wls + homoskedastic var: tends to underestimate the variance. `wls_0` is less conservative than `ehw_0` is not theoretically guaranteed. It is very likely to be a coincidence due to the underestimation habit of (wls + homoskedastic var).
+
+- wls + ehw: when the correct model is included in the specification, performance is very nice. When misspecification happens, still robust but can be very conservative.
+
+- lex: works fair in general. A little bit more conservative than ehw_1 but less conservative than ehw_0.
+
+
+### CI coverage
+
+```{r}
+# CI coverage
+print(data.frame(
+  target_effect = target_effect,
+  wls_0_coverage  = rowSums(record$rec_coverage_wls_0)/1000,
+  ehw_0_coverage  = rowSums(record$rec_coverage_ehw_0)/1000,
+  wls_1_coverage  = rowSums(record$rec_coverage_wls_1)/1000,
+  ehw_1_coverage  = rowSums(record$rec_coverage_ehw_1)/1000,
+  lex_coverage  = rowSums(record$rec_coverage_lex)/1000
+))
+
+```
+
+
+
+
+### Wald inference
+
+```{r}
+# wald inference
+print(data.frame(
+  method = c('wls_0', 'ehw_0', 'wls_1', 'ehw_1', 'lex'),
+  wald_coverage = c(sum(record$rec_wald_wls_0)/1000,
+                    sum(record$rec_wald_ehw_0)/1000,
+                    sum(record$rec_wald_wls_1)/1000, 
+                    sum(record$rec_wald_ehw_1)/1000,
+                    sum(record$rec_wald_lex)/1000)
+))
+```
+
+
+
+### How does the performance change for lex as the size of the groups vary?
+
+In the first experiment, we tried pairing based on lexicographical order, which is inherently group size $|g| = 2$. In this experiment we vary the group size: $|g| = 2*k, k=1,\cdots, 10$ and make comparison over 500 MC runs.
+
+```{r}
+record_vary_lex <- readRDS("record_OUTCOME_VARY_LEX.RData")
+
+group_size <- 2*(1:10)
+mean_sd <- apply(record_vary_lex$rec_var_est_lex, MARGIN = c(1,2,4), function(x){mean(sqrt(max(x,0)))})
+mean_sd <- mean_sd[1,1,]
+plot_df <- data.frame(
+  mean_sd = mean_sd,
+  group_size = group_size
+  )
+ggplot(plot_df, aes(x=group_size, y= mean_sd)) +
+  geom_point() + 
+  geom_hline(yintercept = 0.04437045, col = 'red') +
+  annotate(geom="text", x=5, y=0.046, label="true sd: 0.04437045", color="red") + 
+  scale_x_continuous(breaks = 2*(1:10))
+```
+
+Note that when group size equals $2^k$, the performance is good. This is because the data generating process induces averages that are clustered in segments of size $32$. See the plot at the beginning of this pdf file showing the pattern of $mu$. Therefore, grouping by $2^k$ will not cause any "breaks" in the means. As $k$ get large, one can approximate the group-wise mean better, hence the variance estimation gets less conservative. However, if group size $\neq 2^k$, using smaller groups leads to better performance. 
+
+For grouping, our proposal adds some finite sample correction which targets the worst case scenario: the potential outcomes have high correlation (think about the $\varrho_g$ we defined in the theory). Maybe in some cases smaller correction factors also suffice for robustness and can reduce the conservativeness. But we need stronger assumptions.
+
+Overall, there is no panacea for variance estimation under unreplicated designs. One needs more information such as knowledge about DGP or additional covariates. If we know them, grouping can help a lot to handle the embarrassment in unreplicated experiments.
+
+
+
+### Can we do clustering?
+
+In this part we try clustering based on outcomes. We use `kmeans` from R base library. The only tuning parameter is the number of centers. We try $number~ of ~centers = 2k, k=1:7$, each with 500 MC runs.
+
+```{r}
+record_vary_km <- readRDS("record_OUTCOME_VARY_KM.RData")
+
+num_of_cluster <- 2*(1:7)
+mean_sd <- apply(record_vary_km$rec_var_est_km, MARGIN = c(1,2,4), function(x){mean(sqrt(max(x,0)))})
+mean_sd <- mean_sd[1,1,]
+plot_df <- data.frame(
+  mean_sd = mean_sd,
+  num_of_cluster = num_of_cluster
+  )
+ggplot(plot_df, aes(x=num_of_cluster, y= mean_sd)) +
+  geom_point() + 
+  geom_hline(yintercept = 0.04437045, col = 'red') +
+  annotate(geom="text", x=5, y=0.046, label="true sd: 0.04437045", color="red") + 
+  scale_x_continuous(breaks = 2*(1:7))
+```
+
+
+
+Small number of clusters lead to high conservativenss, while large number of clusters under-estimate the variance. In general it is unknown to decide a proper choice. Besides the theory is not clear if one use the outcomes twice.
+
+
+
+
+
+
+
+

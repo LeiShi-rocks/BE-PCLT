@@ -1,0 +1,668 @@
+---
+title: "BE_PCLT_report"
+author: "Lei Shi"
+date: '2022-08-17'
+output: 
+  pdf_document:
+    toc: true
+---
+
+```{r message=FALSE, include=FALSE}
+# Input everything
+library("dplyr")
+options(dplyr.summarise.inform = FALSE)
+
+library("ggplot2")
+library("tidyverse")
+if(!require("AlgDesign")){
+  install.packages("AlgDesign")
+}
+library("AlgDesign")
+if(!require("coop")){
+  install.packages("coop")
+}
+library("coop")
+library("car")
+library("glmnet")
+
+if (!require('latex2exp', quietly = TRUE)) { install.packages('latex2exp') } 
+library('latex2exp') # Load package 'Rcpp'
+
+if (!require('Rcpp', quietly = TRUE)) { install.packages('Rcpp') } 
+library('Rcpp') # Load package 'Rcpp'
+ 
+if (!require('RcppArmadillo', quietly = TRUE)) { install.packages('RcppArmadillo') } 
+library('RcppArmadillo') # Load package 'RcppArmadillo'
+
+library("knitr")
+
+if (!require('qwraps2', quietly = TRUE)) { install.packages('qwraps2') } 
+library('qwraps2') # Load package 'qwraps2'
+
+if (!require('xtable', quietly = TRUE)) { install.packages('xtable') } 
+library('xtable') # Load package 'qwraps2'
+
+if (!require('matrixStats', quietly = TRUE)) { install.packages('matrixStats') } 
+library('matrixStats') # Load package 'qwraps2'
+
+setwd("~/Desktop/Research/BE_PCLT")
+source("auxillary_functions.R")
+```
+
+
+
+# Small effects
+
+```{r include=FALSE}
+# generate a factorial experiment
+# basic parameter setup
+K <- 10
+num_trt_group <- 2^K
+
+# design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = rep(1,2^K), 1)
+# design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+active_facs <- rowSums(data.ind)
+trt_group_size <- rep(1, 2^K)
+trt_group_size[1:660] <- 1
+trt_group_size[661:1010]  <- 2
+trt_group_size[1011:1024] <- 30
+num_pop <- sum(trt_group_size)
+
+Q_U <- 660 # unreplicated small arms
+Q_R <- 350  # replicated small arms
+Q_L <- 14 # large arms
+```
+
+
+
+```{r include=FALSE}
+# generate factorial design
+design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+
+# generate factorial effects
+set.seed(2022)
+
+tau <- c(
+  runif(choose(K,0), 0.1, 0.5) * sign(runif(choose(K,0), -1, 1)),
+  runif(choose(K,1), 0.1, 0.5) * sign(runif(choose(K,1), -1, 1)),
+  runif(choose(K,2), 0.1, 0.5) * sign(runif(choose(K,2), -1, 1)) * rbinom(choose(K,2), 1, 0.7)
+)
+
+names(tau) <- c("(Intecept)", names(design.core))
+
+# non-zeros
+nonzero.effect <- paste0("F", setdiff(1:K,c(1,4,7,10)))
+# nonzero.effect <- paste0("F", 1:2)
+nonzero.effect <- c(nonzero.effect, 
+                    heredity.proceed.new(K, nonzero.effect, 1,
+                                         "strong")$working_model)
+zero.effect <- setdiff(names(tau), nonzero.effect)
+tau[zero.effect] <- 0
+
+tau
+```
+
+
+```{r include=FALSE}
+# generate finite population
+mu <- as.matrix(design.core) %*% tau[-1]
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rbinom(2^K, 1, 0.5) + 1
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+pop_cov <- coop::covar(pop_1) 
+# very fast!! so much faster than cov()
+
+true_cov_Yhat <- diag(diag(pop_cov)/trt_group_size) - (1/num_pop) * pop_cov
+
+```
+
+
+```{r include=FALSE}
+# specify target effects and target design
+target_effect  <- c('F2', 'F4', 'F6', 'F8', 'F10')
+target_design  <- design.core[,target_effect]
+
+target_tau <- 1/2^K * t(as.matrix(target_design)) %*% mu
+
+```
+
+
+```{r include=FALSE}
+# population level:
+## tau
+cat("tau\n")
+target_tau
+cat("\n")
+
+## variance for the estimator
+cat("true variance\n")
+true_cov_tauhat <- t(as.matrix(target_design)) %*% true_cov_Yhat %*% as.matrix(target_design) / 1024^2
+true_cov_tauhat
+sqrt(diag(true_cov_tauhat))
+cat("\n")
+```
+
+
+
+# Experiment setup
+
+- K = 10, number of factors
+- Q_U = 660, number of unreplicated arms, each with $N_q = 1$
+- Q_R = 350, number of small replicated arms, each with $N_q = 2$
+- Q_L = 14, number of large arms, each with $N_q = 30$.
+- N = 1780, population
+
+Generate data such that all the $k$-way ($k\ge 3$) interactions are zero. The effects are small: nonzero effects are randomly generated from $\text{uniform}([-0.5,-0.1]\cup [0.1,0.5])$. 
+
+The nonzero factorial effects in the first two levels:
+```{r}
+tau[abs(tau)>1e-4]
+```
+
+
+
+The true target effects and true variance for the WLS estimator:
+```{r}
+# population level:
+## tau
+cat("target_tau\n")
+target_tau
+cat("\n")
+
+## variance for the estimator
+cat("true variance\n")
+true_cov_tauhat <- t(as.matrix(target_design)) %*% true_cov_Yhat %*% as.matrix(target_design) / 1024^2
+true_cov_tauhat
+cat("\n")
+
+## True standard deviation
+cat("true sd\n")
+sqrt(diag(true_cov_tauhat))
+cat("\n")
+```
+
+
+
+
+
+Target effects we want to estimate: 'F2', 'F4', 'F6', 'F8', 'F10'
+
+ 
+
+# Numeric experiments
+
+We run 1000 MC trials and report:
+
+- histogram of the point estimates
+- estimated standard deviation for 3 methods (see later parts on what these methods are)
+- 95%-CI coverage
+
+## Distribution of point estimates
+
+
+```{r}
+# report results
+record <- readRDS("record_SMALL_EFFECTS.RData")
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record$rec_point_est)),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+summary_data <- data.frame(
+  target_tau = target_tau,
+  labs = factor(target_effect, levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+ggplot(hist_data, aes(x = est)) + 
+  facet_wrap(~labs, scales = 'free_x') +
+  geom_histogram() + 
+  geom_vline(data = summary_data, mapping = aes(xintercept = target_tau), col = 'red') # red lines are the true effects
+
+```
+
+
+```{r}
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record$rec_point_est)) - rep(target_tau, each = 1000),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+summary_data <- data.frame(
+  target_tau = target_tau,
+  labs = factor(target_effect, levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+plot_SE <- ggplot(hist_data, aes(x = labs, y = est, fill = labs)) + 
+  geom_violin() + 
+  theme(legend.position="none",
+        text = element_text(size = 20)) +
+  scale_x_discrete(labels = c(
+    "F2" = TeX("$F_2$"),
+    "F4" = TeX("$F_4$"),
+    "F6" = TeX("$F_6$"),
+    "F8" = TeX("$F_8$"),
+    "F10" = TeX("$F_{10}$")
+  )) +
+  labs(
+    y = expression(hat(gamma) - gamma),
+    x = "Target effect"
+  ) 
+
+plot_SE
+
+
+```
+
+```{r eval=FALSE, include=FALSE}
+ggsave(
+  "BE_PCLT_SMALL_EFFECTS.pdf",
+  plot = plot_SE,
+  device = "pdf", 
+  dpi = 300
+)
+```
+
+
+
+Takeaways:
+
+- CLT holds even the design is highly non-uniform.
+
+
+
+ 
+
+## Expectation of the sd estimators
+
+We applied three methods for variance estimation:
+
+- ehw_0: wls + hc2 var, with specification: $Y\sim F2+F4+F6+F8+F10$
+- ehw_1: wls + hc2 var, with specification; $Y\sim (F2+F4+F6+F8+F10)^2$
+- lex:   lexicographical pairing
+
+```{r message=FALSE}
+# expectation of sd estimator
+print(data.frame(
+  true_sd   = sqrt(diag(true_cov_tauhat)),
+  ehw_0_sd  = diag(apply(sqrt(record$rec_var_est_ehw_0), MARGIN = c(1,2), sum))/1000,
+  ehw_1_sd  = diag(apply(sqrt(record$rec_var_est_ehw_1), MARGIN = c(1,2), sum))/1000,
+  lex_sd  = diag(apply(sqrt(record$rec_var_est_lex), MARGIN = c(1,2), sum))/1000
+))
+
+```
+
+
+
+Takeaways: in the small effect cases,
+
+- wls + ehw: both `ehw_0` and `ehw_1` are robust. Adding two-way interactions gives less conservative variance estimation.
+
+- lex:       `lex` pairing is robust. It works better than `ehw` since there is smaller between group variation. 
+
+ 
+
+## CI coverage
+
+```{r}
+# CI coverage
+summary_data <- data.frame(
+  lex_coverage  = rowSums(record$rec_coverage_lex)/1000,
+  ehw_0_coverage  = rowSums(record$rec_coverage_ehw_0)/1000,
+  ehw_1_coverage  = rowSums(record$rec_coverage_ehw_1)/1000
+)
+
+
+
+summary_data %>% kable("latex") %>% cat
+
+```
+
+
+
+
+
+## Power
+
+```{r}
+print(data.frame(
+  # target_effect = target_effect,
+  lex_coverage  = rowSums(record$rec_reject_lex)/1000,
+  ehw_0_coverage  = rowSums(record$rec_reject_ehw_0)/1000,
+  ehw_1_coverage  = rowSums(record$rec_reject_ehw_1)/1000
+))
+```
+
+
+
+
+
+
+# Large effects
+
+
+
+```{r include=FALSE}
+# generate a factorial experiment
+# basic parameter setup
+K <- 10
+num_trt_group <- 2^K
+
+# design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = rep(1,2^K), 1)
+# design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+active_facs <- rowSums(data.ind)
+trt_group_size <- rep(1, 2^K)
+trt_group_size[1:660] <- 1
+trt_group_size[661:1010]  <- 2
+trt_group_size[1011:1024] <- 30
+num_pop <- sum(trt_group_size)
+
+Q_U <- 660 # unreplicated small arms
+Q_R <- 350  # replicated small arms
+Q_L <- 14 # large arms
+```
+
+
+
+```{r include=FALSE}
+# generate factorial design
+design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+
+# generate factorial effects
+set.seed(2023)
+
+tau <- c(
+  runif(choose(K,0), 0.1, 0.5) * sign(runif(choose(K,0), -1, 1)),
+  runif(choose(K,1), 0.5, 1.0) * sign(runif(choose(K,1), -1, 1)),
+  runif(choose(K,2), 0.1, 0.5) * sign(runif(choose(K,2), -1, 1)) * rbinom(choose(K,2), 1, 0.7)
+)
+
+names(tau) <- c("(Intecept)", names(design.core))
+
+# non-zeros
+nonzero.effect <- paste0("F", setdiff(1:K,c(1,4,7,10)))
+# nonzero.effect <- paste0("F", 1:2)
+nonzero.effect <- c(nonzero.effect, 
+                    heredity.proceed.new(K, nonzero.effect, 1,
+                                         "strong")$working_model)
+zero.effect <- setdiff(names(tau), nonzero.effect)
+tau[zero.effect] <- 0
+
+tau
+```
+
+
+```{r include=FALSE}
+# generate finite population
+mu <- as.matrix(design.core) %*% tau[-1]
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("norm", 2^K)
+finite.pop.opts$avg  <- mu
+finite.pop.opts$std  <- rbinom(2^K, 1, 0.5) + 1
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+pop_cov <- coop::covar(pop_1) 
+# very fast!! so much faster than cov()
+
+true_cov_Yhat <- diag(diag(pop_cov)/trt_group_size) - (1/num_pop) * pop_cov
+
+```
+
+
+```{r include=FALSE}
+# specify target effects and target design
+target_effect  <- c('F2', 'F4', 'F6', 'F8', 'F10')
+target_design  <- design.core[,target_effect]
+
+target_tau <- 1/2^K * t(as.matrix(target_design)) %*% mu
+
+```
+
+
+```{r include=FALSE}
+# population level:
+## tau
+cat("tau\n")
+target_tau
+cat("\n")
+
+## variance for the estimator
+cat("true variance\n")
+true_cov_tauhat <- t(as.matrix(target_design)) %*% true_cov_Yhat %*% as.matrix(target_design) / 1024^2
+true_cov_tauhat
+sqrt(diag(true_cov_tauhat))
+cat("\n")
+```
+
+
+
+# Experiment setup
+
+- K = 10, number of factors
+- Q_U = 660, number of unreplicated arms, each with $N_q = 1$
+- Q_R = 350, number of small replicated arms, each with $N_q = 2$
+- Q_L = 14, number of large arms, each with $N_q = 30$.
+- N = 1780, population
+
+Generate data such that all the $k$-way ($k\ge 3$) interactions are zero. The effects are small: nonzero effects are randomly generated from $\text{uniform}([-0.5,-0.1]\cup [0.1,0.5])$. 
+
+The nonzero factorial effects in the first two levels:
+```{r}
+tau[abs(tau)>1e-4]
+```
+
+
+
+The true target effects and true variance for the WLS estimator:
+```{r}
+# population level:
+## tau
+cat("target_tau\n")
+target_tau
+cat("\n")
+
+## variance for the estimator
+cat("true variance\n")
+true_cov_tauhat <- t(as.matrix(target_design)) %*% true_cov_Yhat %*% as.matrix(target_design) / 1024^2
+true_cov_tauhat
+cat("\n")
+
+## True standard deviation
+cat("true sd\n")
+sqrt(diag(true_cov_tauhat))
+cat("\n")
+```
+
+
+
+
+
+Target effects we want to estimate: 'F2', 'F4', 'F6', 'F8', 'F10'
+
+ 
+
+# Numeric experiments
+
+We run 1000 MC trials and report:
+
+- histogram of the point estimates
+- estimated standard deviation for 3 methods (see later parts on what these methods are)
+- 95%-CI coverage
+
+## Distribution of point estimates
+
+
+```{r}
+# report results
+record <- readRDS("record_LARGE_EFFECTS.RData")
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record$rec_point_est)),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+summary_data <- data.frame(
+  target_tau = target_tau,
+  labs = factor(target_effect, levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+ggplot(hist_data, aes(x = est)) + 
+  facet_wrap(~labs, scales = 'free_x') +
+  geom_histogram() + 
+  geom_vline(data = summary_data, mapping = aes(xintercept = target_tau), col = 'red') # red lines are the true effects
+
+
+
+```
+
+
+
+```{r}
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record$rec_point_est)) - rep(target_tau, each = 1000),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+summary_data <- data.frame(
+  target_tau = target_tau,
+  labs = factor(target_effect, levels = c('F2', 'F4', 'F6', 'F8', 'F10'))
+)
+
+plot_LE <- ggplot(hist_data, aes(x = labs, y = est, fill = labs)) + 
+  geom_violin() + 
+  theme(legend.position="none",
+        text = element_text(size = 20)) +
+  scale_x_discrete(labels = c(
+    "F2" = TeX("$F_2$"),
+    "F4" = TeX("$F_4$"),
+    "F6" = TeX("$F_6$"),
+    "F8" = TeX("$F_8$"),
+    "F10" = TeX("$F_{10}$")
+  )) +
+  labs(
+    y = expression(hat(gamma) - gamma),
+    x = "Target effect"
+  ) 
+
+plot_LE
+
+```
+
+
+```{r eval=FALSE, include=FALSE}
+ggsave(
+  "BE_PCLT_LARGE_EFFECTS.pdf",
+  plot = plot_LE,
+  device = "pdf", 
+  dpi = 300
+)
+```
+
+
+Takeaways:
+
+- CLT holds even the design is highly non-uniform.
+
+ 
+
+## Expectation of the sd estimators
+
+We applied three methods for variance estimation:
+
+- ehw_0: wls + hc2 var, with specification: $Y\sim F2+F4+F6+F8+F10$
+- ehw_1: wls + hc2 var, with specification; $Y\sim (F2+F4+F6+F8+F10)^2$
+- lex:   lexicographical pairing
+
+```{r message=FALSE}
+# expectation of sd estimator
+print(data.frame(
+  true_sd   = sqrt(diag(true_cov_tauhat)),
+  ehw_0_sd  = diag(apply(sqrt(record$rec_var_est_ehw_0), MARGIN = c(1,2), sum))/1000,
+  ehw_1_sd  = diag(apply(sqrt(record$rec_var_est_ehw_1), MARGIN = c(1,2), sum))/1000,
+  lex_sd  = diag(apply(sqrt(record$rec_var_est_lex), MARGIN = c(1,2), sum))/1000
+))
+
+```
+
+
+
+Takeaways: in the small effect cases,
+
+- wls + ehw: both `ehw_0` and `ehw_1` are robust. Adding two-way interactions gives less conservative variance estimation.
+
+- lex:       `lex` pairing is robust. It works better than `ehw` since there is smaller between group variation. 
+
+ 
+
+## CI coverage
+
+```{r}
+# CI coverage
+data.frame(
+  # target_effect = target_effect,
+  lex_coverage  = rowSums(record$rec_coverage_lex)/1000,
+  ehw_0_coverage  = rowSums(record$rec_coverage_ehw_0)/1000,
+  ehw_1_coverage  = rowSums(record$rec_coverage_ehw_1)/1000
+) %>% kable(format = "latex") %>% cat
+
+```
+
+
+```{r}
+
+```
+
+
+
+## Power
+
+```{r}
+print(data.frame(
+  #target_effect = target_effect,
+  lex_coverage  = rowSums(record$rec_reject_lex)/1000,
+  ehw_0_coverage  = rowSums(record$rec_reject_ehw_0)/1000,
+  ehw_1_coverage  = rowSums(record$rec_reject_ehw_1)/1000
+))
+```
+
+
+
+
+
+
+

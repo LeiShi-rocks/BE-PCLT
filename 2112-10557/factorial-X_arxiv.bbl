@@ -1,0 +1,374 @@
+\begin{thebibliography}{57}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abadie et~al.(2020)Abadie, Athey, Imbens, and
+  Wooldridge]{abadie2020sampling}
+A.~Abadie, S.~Athey, G.~W. Imbens, and J.~M. Wooldridge.
+\newblock Sampling-based versus design-based uncertainty in regression
+  analysis.
+\newblock \emph{Econometrica}, 88:\penalty0 265--296, 2020.
+
+\bibitem[Alsan et~al.(2021)Alsan, Stanford, Banerjee, Breza, Chandrasekhar,
+  Eichmeyer, Goldsmith-Pinkham, Ogbu-Nwobodo, Olken, Torres, Sankar, Vautrey,
+  and Duflo]{alsan}
+M.~Alsan, F.~C. Stanford, A.~Banerjee, E.~Breza, A.~G. Chandrasekhar,
+  S.~Eichmeyer, P.~Goldsmith-Pinkham, L.~Ogbu-Nwobodo, B.~A. Olken, C.~Torres,
+  A.~Sankar, P.-L. Vautrey, and E.~Duflo.
+\newblock Comparison of knowledge and information-seeking behavior after
+  general {COVID}-19 public health messages and messages tailored for {B}lack
+  and {L}atinx communities.
+\newblock \emph{Annals of Internal Medicine}, 174:\penalty0 484--492, 2021.
+
+\bibitem[Angrist et~al.(2009)Angrist, Lang, and Oropoulos]{AngristStar09}
+J.~Angrist, D.~Lang, and P.~Oropoulos.
+\newblock Incentives and services for college achievement: {E}vidence from a
+  randomized trial.
+\newblock \emph{American Economic Journal: Applied Economics}, 1:\penalty0
+  136--163, 2009.
+
+\bibitem[Blackwell and Pashley(2021)]{blackwell}
+M.~Blackwell and N.~E. Pashley.
+\newblock Noncompliance and instrumental variables for {$2^K$} factorial
+  experiments.
+\newblock \emph{Journal of the American Statistical Association}, in press,
+  2021.
+
+\bibitem[Bloniarz et~al.(2016)Bloniarz, Liu, Zhang, Sekhon, and Yu]{LassoTE16}
+A.~Bloniarz, H.~Z. Liu, C.~Zhang, J.~Sekhon, and B.~Yu.
+\newblock Lasso adjustments of treatment effect estimates in randomized
+  experiments.
+\newblock \emph{Proceedings of the National Academy of Sciences of the United
+  States of America}, 113:\penalty0 7383--7390, 2016.
+
+\bibitem[Box et~al.(2005)Box, Hunter, and Hunter]{box}
+G.~E.~P. Box, J.~S. Hunter, and G.~W. Hunter.
+\newblock \emph{Statistics for Experimenters: {D}esign, Innovation, and
+  Discovery}.
+\newblock New York: Wiley, 2nd edition, 2005.
+
+\bibitem[Branson et~al.(2016)Branson, Dasgupta, and Rubin]{branson}
+Z.~Branson, T.~Dasgupta, and D.~B. Rubin.
+\newblock {Improving covariate balance in $2^{K}$ factorial designs via
+  rerandomization with an application to a {N}ew {Y}ork {C}ity {D}epartment of
+  {E}ducation {H}igh {S}chool {S}tudy}.
+\newblock \emph{The Annals of Applied Statistics}, 10:\penalty0 1958--1976,
+  2016.
+
+\bibitem[Bugni et~al.(2018)Bugni, Canay, and Shaikh]{bugni2018inference}
+F.~A. Bugni, I.~A. Canay, and A.~M. Shaikh.
+\newblock Inference under covariate-adaptive randomization.
+\newblock \emph{Journal of the American Statistical Association}, 113:\penalty0
+  1784--1796, 2018.
+
+\bibitem[Bugni et~al.(2019)Bugni, Canay, and Shaikh]{bugni2019}
+F.~A. Bugni, I.~A. Canay, and A.~M. Shaikh.
+\newblock Inference under covariate-adaptive randomization with multiple
+  treatments.
+\newblock \emph{Quantitative Economics}, 10:\penalty0 1747--1785, 2019.
+
+\bibitem[Chakraborty et~al.(2009)Chakraborty, Collins, Strecher, and
+  Murphy]{cb}
+B.~Chakraborty, L.~M. Collins, V.~J. Strecher, and S.~A. Murphy.
+\newblock Developing multicomponent interventions using fractional factorial
+  designs.
+\newblock \emph{Statistics in Medicine}, 28:\penalty0 2687--2708, 2009.
+
+\bibitem[Collins et~al.(2009)Collins, Dziak, and Li]{cdl}
+L.~M. Collins, J.~J. Dziak, and R.~Z. Li.
+\newblock Design of experiments with multiple independent variables: {A}
+  resource management perspective on complete and reduced factorial designs.
+\newblock \emph{Psychological methods}, 14:\penalty0 202--224, 2009.
+
+\bibitem[Cox(1982)]{cox:1982}
+D.~R. Cox.
+\newblock Randomization and concomitant variables in the design of experiments.
+\newblock In G.~Kallianpur, P.~R. Krishnaiah, and J.~K. Ghosh, editors,
+  \emph{Statistics and Probability: Essays in Honor of C. R. Rao}, pages
+  197--202. North-Holland, Amsterdam, 1982.
+
+\bibitem[Dasgupta et~al.(2015)Dasgupta, Pillai, and Rubin]{DasFact15}
+T.~Dasgupta, N.~Pillai, and D.~B. Rubin.
+\newblock Causal inference from $2^{K}$ factorial designs by using potential
+  outcomes.
+\newblock \emph{Journal of the Royal Statistical Society, Series B (Statistical
+  Methodology)}, 77:\penalty0 727--753, 2015.
+
+\bibitem[Ding et~al.(2019)Ding, Feller, and Miratrix]{Ding2019}
+P.~Ding, A.~Feller, and L.~Miratrix.
+\newblock Decomposing treatment effect variation.
+\newblock \emph{Journal of the American Statistical Association}, 114:\penalty0
+  304--317, 2019.
+
+\bibitem[Duflo et~al.(2007)Duflo, Glennerster, and Kremer]{duflo}
+E.~Duflo, R.~Glennerster, and M.~Kremer.
+\newblock Using randomization in development economics research: {A} toolkit.
+\newblock In T.~P. Schultz and J.~A. Strauss, editors, \emph{Handbook of
+  Development Economics}, volume~4, chapter~61, pages 3895--3962. Elsevier,
+  2007.
+
+\bibitem[Egami and Imai(2019)]{imai}
+N.~Egami and K.~Imai.
+\newblock Causal interaction in factorial experiments: {A}pplication to
+  conjoint analysis.
+\newblock \emph{Journal of the American Statistical Association}, 114:\penalty0
+  526--540, 2019.
+
+\bibitem[Fisher(1935)]{Fisher35}
+R.~A. Fisher.
+\newblock \emph{The Design of Experiments}.
+\newblock Edinburgh, London: Oliver and Boyd, 1st edition, 1935.
+
+\bibitem[Fogarty(2018)]{fogarty2018regression}
+C.~B. Fogarty.
+\newblock Regression assisted inference for the average treatment effect in
+  paired experiments.
+\newblock \emph{Biometrika}, 105:\penalty0 994--1000, 2018.
+
+\bibitem[Freedman(2008{\natexlab{a}})]{Freedman08a}
+D.~A. Freedman.
+\newblock On regression adjustments to experimental data.
+\newblock \emph{Advances in Applied Mathematics}, 40:\penalty0 180--193,
+  2008{\natexlab{a}}.
+
+\bibitem[Freedman(2008{\natexlab{b}})]{Freedman2008b}
+D.~A. Freedman.
+\newblock On regression adjustments in experiments with several treatments.
+\newblock \emph{Annals of Applied Statistics}, 2:\penalty0 176--196,
+  2008{\natexlab{b}}.
+
+\bibitem[Fuller(2009)]{fuller2009some}
+W.~A. Fuller.
+\newblock Some design properties of a rejective sampling procedure.
+\newblock \emph{Biometrika}, 96:\penalty0 933--944, 2009.
+
+\bibitem[Greene and Seaks(1991)]{greene}
+W.~H. Greene and T.~G. Seaks.
+\newblock The restricted least squares estimator: A pedagogical note.
+\newblock \emph{The Review of Economics and Statistics}, 73:\penalty0 563--567,
+  1991.
+
+\bibitem[Guo and Basse(2021)]{guo2021generalized}
+K.~Guo and G.~Basse.
+\newblock {The generalized Oaxaca--Blinder estimator}.
+\newblock \emph{Journal of the American Statistical Association}, page in
+  press, 2021.
+
+\bibitem[Hainmueller et~al.(2014)Hainmueller, Hopkins, and Yamamoto]{jens}
+J.~Hainmueller, D.~J. Hopkins, and T.~Yamamoto.
+\newblock Causal inference in conjoint analysis: {U}nderstanding
+  multidimensional choices via stated preference experiments.
+\newblock \emph{Political Analysis}, 22:\penalty0 1--30, 2014.
+
+\bibitem[Hinkelmann and Kempthorne(2008)]{hinkelmann}
+K.~Hinkelmann and O.~Kempthorne.
+\newblock \emph{Design and Analysis of Experiments: Introduction to
+  Experimental Design}, volume~1.
+\newblock John Wiley \& Sons, 2nd edition, 2008.
+
+\bibitem[Imbens and Rubin(2015)]{CausalImbens}
+G.~W. Imbens and D.~B. Rubin.
+\newblock \emph{Causal Inference for Statistics, Social, and Biomedical
+  Sciences: An Introduction}.
+\newblock Cambridge: Cambridge University Press, 2015.
+
+\bibitem[Karlan and List(2007)]{Karlan2007}
+D.~Karlan and J.~A. List.
+\newblock Does price matter in charitable giving? {E}vidence from a large-scale
+  natural field experiment.
+\newblock \emph{American Economic Review}, 97:\penalty0 1774--1793, 2007.
+
+\bibitem[Karlan and McConnell(2014)]{karlan2014}
+D.~Karlan and M.~A. McConnell.
+\newblock Hey look at me: {T}he effect of giving circles on giving.
+\newblock \emph{Journal of Economic Behavior and Organization}, 106:\penalty0
+  402--412, 2014.
+
+\bibitem[Kempthorne(1952)]{kempthorne1952design}
+O.~Kempthorne.
+\newblock \emph{The Design and Analysis of Experiments}.
+\newblock New York: John Wiley \& Sons, 1952.
+
+\bibitem[Li and Ding(2017)]{DingCLT}
+X.~Li and P.~Ding.
+\newblock General forms of finite population central limit theorems with
+  applications to causal inference.
+\newblock \emph{Journal of the American Statistical Association}, 112:\penalty0
+  1759--1169, 2017.
+
+\bibitem[Li and Ding(2020)]{LD20}
+X.~Li and P.~Ding.
+\newblock Rerandomization and regression adjustment.
+\newblock \emph{Journal of the Royal Statistical Society, Series B (Statistical
+  Methodology)}, 82:\penalty0 241--268, 2020.
+
+\bibitem[Li et~al.(2018)Li, Ding, and Rubin]{LD2018}
+X.~Li, P.~Ding, and D.~B. Rubin.
+\newblock Asymptotic theory of rerandomization in treatment-control
+  experiments.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 115:\penalty0
+  9157--9162, 2018.
+
+\bibitem[Li et~al.(2020)Li, Ding, and Rubin]{AOS}
+X.~Li, P.~Ding, and D.~B. Rubin.
+\newblock Rerandomization in $2^{K}$ factorial experiments.
+\newblock \emph{The Annals of Statistics}, 48:\penalty0 43--63, 2020.
+
+\bibitem[Lin(2013)]{Lin13}
+W.~Lin.
+\newblock Agnostic notes on regression adjustments to experimental data:
+  {R}eexamining {F}reedman's critique.
+\newblock \emph{The Annals of Applied Statistics}, 7:\penalty0 295--318, 2013.
+
+\bibitem[Liu and Yang(2020)]{liu2020regression}
+H.~Liu and Y.~Yang.
+\newblock Regression-adjusted average treatment effect estimates in stratified
+  randomized experiments.
+\newblock \emph{Biometrika}, 107:\penalty0 935--948, 2020.
+
+\bibitem[Lu(2016{\natexlab{a}})]{lu16bFact}
+J.~Lu.
+\newblock On randomization-based and regression-based inferences for $2^{K}$
+  factorial designs.
+\newblock \emph{Statistics and Probability Letters}, 112:\penalty0 72--78,
+  2016{\natexlab{a}}.
+
+\bibitem[Lu(2016{\natexlab{b}})]{lu2016covariate}
+J.~Lu.
+\newblock {Covariate adjustment in randomization-based causal inference for
+  $2^{K}$ factorial designs}.
+\newblock \emph{Statistics and Probability Letters}, 119:\penalty0 11--20,
+  2016{\natexlab{b}}.
+
+\bibitem[Miratrix et~al.(2013)Miratrix, Sekhon, and Yu]{PostStratYu}
+L.~Miratrix, J.~Sekhon, and B.~Yu.
+\newblock Adjusting treatment effect estimates by post-stratification in
+  randomized experiments.
+\newblock \emph{Journal of the Royal Statistical Society, Series B (Statistical
+  Methodology)}, 75:\penalty0 369--396, 2013.
+
+\bibitem[Morgan and Rubin(2012)]{morgan2012rerandomization}
+K.~L. Morgan and D.~B. Rubin.
+\newblock Rerandomization to improve covariate balance in experiments.
+\newblock \emph{The Annals of Statistics}, 40:\penalty0 1263--1282, 2012.
+
+\bibitem[Mukerjee et~al.(2018)Mukerjee, Dasgupta, and Rubin]{rahul}
+R.~Mukerjee, T.~Dasgupta, and D.~B. Rubin.
+\newblock Using standard tools from finite population sampling to improve
+  causal inference for complex experiments.
+\newblock \emph{Journal of the American Statistical Association}, 113:\penalty0
+  868--881, 2018.
+
+\bibitem[Negi and Wooldridge(2021)]{negi2021revisiting}
+A.~Negi and J.~M. Wooldridge.
+\newblock Revisiting regression adjustment in experiments with heterogeneous
+  treatment effects.
+\newblock \emph{Econometric Reviews}, 40:\penalty0 504--534, 2021.
+
+\bibitem[Neyman(1923)]{Neyman23}
+J.~Neyman.
+\newblock On the application of probability theory to agricultural experiments.
+\newblock \emph{Statistical Science}, 5:\penalty0 465--472, 1923.
+
+\bibitem[Pashley and Bind(2021)]{pashley2021causal}
+N.~E. Pashley and M.-A.~C. Bind.
+\newblock Causal inference for multiple treatments using fractional factorial
+  designs, 2021.
+
+\bibitem[Pedulla(2020)]{pedulla}
+D.~Pedulla.
+\newblock A field experiment of race, gender, and parental status
+  discrimination in the {United States}.
+\newblock Technical report, Harvard Dataverse,
+  https://doi.org/10.7910/DVN/4TTCEY, 2020.
+
+\bibitem[Rao(1973)]{rao}
+C.~R. Rao.
+\newblock \emph{Linear Statistical Inference and its Applications}.
+\newblock John Wiley \& Sons, 2nd edition, 1973.
+
+\bibitem[Schochet(2010)]{Schochet10}
+P.~Z. Schochet.
+\newblock Is regression adjustment supported by the {N}eyman model for causal
+  inference?
+\newblock \emph{Journal of Statistical Planning and Inference}, 140:\penalty0
+  246--59, 2010.
+
+\bibitem[Schochet(2018)]{schochet2018design}
+P.~Z. Schochet.
+\newblock {Design-based estimators for average treatment effects for
+  multi-armed RCTs}.
+\newblock \emph{Journal of Educational and Behavioral Statistics}, 43:\penalty0
+  568--593, 2018.
+
+\bibitem[Sherman(1955)]{sherman}
+S.~Sherman.
+\newblock A theorem on convex sets with applications.
+\newblock \emph{The Annals of Mathematical Statistics}, 26:\penalty0 763--767,
+  1955.
+
+\bibitem[Sinclair et~al.(2012)Sinclair, McConnell, and Green]{Sinclair2012}
+B.~Sinclair, M.~A. McConnell, and D.~P. Green.
+\newblock Detecting spillover effects: {D}esign and analysis of multilevel
+  experiments.
+\newblock \emph{American Journal of Political Science}, 56:\penalty0
+  1055--1069, 2012.
+
+\bibitem[Theil(1971)]{theil}
+H.~Theil.
+\newblock \emph{Principles of Econometrics}.
+\newblock New York: John Wiley \& Sons, 1971.
+
+\bibitem[Torres et~al.(2021)Torres, Ogbu-Nwobodo, Alsan, Stanford, Banerjee,
+  Breza, Chandrasekhar, Eichmeyer, Karnani, Loisel, Goldsmith-Pinkham, Olken,
+  Vautrey, Warner, Duflo, and Group]{torres}
+C.~Torres, L.~Ogbu-Nwobodo, M.~Alsan, F.~C. Stanford, A.~Banerjee, E.~Breza,
+  A.~G. Chandrasekhar, S.~Eichmeyer, M.~Karnani, T.~Loisel,
+  P.~Goldsmith-Pinkham, B.~A. Olken, P.-L. Vautrey, E.~Warner, E.~Duflo, and
+  COVID-19~Working Group.
+\newblock Effect of physician-delivered {COVID}-19 public health messages and
+  messages acknowledging racial inequity on {B}lack and {W}hite adults'
+  knowledge, beliefs, and practices related to {COVID}-19: {A} randomized
+  clinical trial.
+\newblock \emph{JAMA Network Open}, 4:\penalty0 e2117115--e2117115, 2021.
+
+\bibitem[Tsiatis et~al.(2008)Tsiatis, Davidian, Zhang, and Lu]{tsia}
+A.~A. Tsiatis, M.~Davidian, M.~Zhang, and X.~M. Lu.
+\newblock Covariate adjustment for two-sample treatment comparisons in
+  randomized clinical trials: {A} principled yet flexible approach.
+\newblock \emph{Statistics in Medicine}, 27:\penalty0 4658--4677, 2008.
+
+\bibitem[Wu and Hamada(2009)]{wh}
+C.~F.~J. Wu and M.~Hamada.
+\newblock \emph{Experiments: Planning, Analysis, and Optimization}.
+\newblock New York: John Wiley \& Sons, 2009.
+
+\bibitem[Ye et~al.(2021)Ye, Shao, Yi, and Zhao]{ye}
+T.~Ye, J.~Shao, Y.~Y. Yi, and Q.~Y. Zhao.
+\newblock Toward better practice of covariate adjustment in analyzing
+  randomized clinical trials.
+\newblock \emph{Technical report, arXiv}, 2021.
+
+\bibitem[Zhao and Ding(2021{\natexlab{a}})]{ZDa}
+A.~Zhao and P.~Ding.
+\newblock Regression-based causal inference with factorial experiments:
+  estimands, model specifications, and design-based properties.
+\newblock \emph{Biometrika}, accepted, 2021{\natexlab{a}}.
+
+\bibitem[Zhao and Ding(2021{\natexlab{b}})]{ZDb}
+A.~Zhao and P.~Ding.
+\newblock Reconciling design-based and model-based causal inferences for
+  split-plot experiments.
+\newblock \emph{The Annals of Statistics}, accepted, 2021{\natexlab{b}}.
+
+\bibitem[Zhao and Ding(2021{\natexlab{c}})]{ZDfrt}
+A.~Zhao and P.~Ding.
+\newblock Covariate-adjusted {Fisher} randomization tests for the average
+  treatment effect.
+\newblock \emph{Journal of Econometrics}, 225:\penalty0 278--294,
+  2021{\natexlab{c}}.
+
+\end{thebibliography}

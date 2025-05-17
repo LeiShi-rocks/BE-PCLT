@@ -1,0 +1,146 @@
+---
+title: "BE_PCLT_report"
+author: "Lei Shi"
+date: '2022-08-17'
+output: pdf_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+
+## Experiment setup
+
+- K = 10, number of factors
+- Q_U = 638, number of unreplicated arms, each with $N_q = 1$
+- Q_R = 375, number of small replicated arms, each with $N_q = 2$
+- Q_L = 11, number of large arms, each with $N_q = 30$.
+- N = 1718, population
+
+Generate data such that all the $k$-way ($k\ge 3$) interactions are zero.
+
+Target effects we want to estimate: 'F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3'
+
+
+## Experiment with correct specifications
+
+In this experiments, we run 1000 MC trials. The data are generated such that only 'F1', 'F2' and 'F1.F2' have nonzero effects.
+
+
+```{r}
+# report results
+record <- readRDS("record_CORRECT_SPEC.RData")
+target_effect  <- c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3')
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record[[1]])),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3'))
+)
+
+ggplot(hist_data, aes(x = est)) + 
+  facet_wrap(~labs, scales = 'free_x') +
+  geom_histogram()
+
+# true effects: -1.481314  3.175201  0.000000 -2.706229  0.000000  0.000000
+```
+
+```{r}
+# expectation of sd estimator
+target_effect  <- c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3')
+print(data.frame(
+  target_effect = target_effect,
+  wls_coverage  = diag(apply(sqrt(record[[2]]), MARGIN = c(1,2), sum))/1000,
+  ehw_coverage  = diag(apply(sqrt(record[[3]]), MARGIN = c(1,2), sum))/1000,
+  lex_coverage  = diag(apply(sqrt(record[[4]]), MARGIN = c(1,2), sum))/1000
+))
+
+# true sd's:
+# 0.04368610 0.04368584 0.04368498 0.04368678 0.04368549 0.04368564
+```
+
+
+
+```{r}
+# CI coverage
+target_effect  <- c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3')
+print(data.frame(
+  target_effect = target_effect,
+  wls_coverage  = rowSums(record[[5]])/1000,
+  ehw_coverage  = rowSums(record[[6]])/1000,
+  lex_coverage  = rowSums(record[[7]])/1000
+))
+
+```
+
+
+```{r}
+# wald inference
+print(data.frame(
+  method = c('WLS', 'EHW', 'LEX'),
+  wald_coverage = c(sum(record[[8]])/1000, sum(record[[9]])/1000, sum(record[[10]])/1000)
+))
+```
+
+
+
+
+## Experiment with incorrect specifications
+
+In this experiments, we run 1000 MC trials. The data are generated such that only 'F1', 'F3', 'F5', 'F7', 'F9' have nonzero main effects. The two-way interactions are generated through strong heredity so some of them are also nonzero.
+
+```{r}
+# report results
+record <- readRDS("record_INCORRECT_SPEC.RData")
+target_effect  <- c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3')
+# point estimates
+hist_data <- data.frame(
+  est = c(t(record[[1]])),
+  labs = factor(rep(target_effect, each = 1000), levels = c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3'))
+)
+
+ggplot(hist_data, aes(x = est)) + 
+  facet_wrap(~labs, scales = 'free_x') +
+  geom_histogram()
+
+# true effects: -1.481314  0.000000  1.738920  0.000000 -1.548822  0.000000
+```
+
+```{r}
+# expectation of sd estimator
+target_effect  <- c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3')
+print(data.frame(
+  target_effect = target_effect,
+  wls_coverage  = diag(apply(sqrt(record[[2]]), MARGIN = c(1,2), sum))/1000,
+  ehw_coverage  = diag(apply(sqrt(record[[3]]), MARGIN = c(1,2), sum))/1000,
+  lex_coverage  = diag(apply(sqrt(record[[4]]), MARGIN = c(1,2), sum))/1000
+))
+
+# true sd's:
+# 0.04368610 0.04368584 0.04368498 0.04368678 0.04368549 0.04368564 
+```
+
+
+
+```{r}
+# CI coverage
+target_effect  <- c('F1', 'F2', 'F3', 'F1.F2', 'F1.F3', 'F2.F3')
+print(data.frame(
+  target_effect = target_effect,
+  wls_coverage  = rowSums(record[[5]])/1000,
+  ehw_coverage  = rowSums(record[[6]])/1000,
+  lex_coverage  = rowSums(record[[7]])/1000
+))
+
+```
+
+
+```{r}
+# wald inference
+print(data.frame(
+  method = c('WLS', 'EHW', 'LEX'),
+  wald_coverage = c(sum(record[[8]])/1000, sum(record[[9]])/1000, sum(record[[10]])/1000)
+))
+```

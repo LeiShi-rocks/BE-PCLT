@@ -1,0 +1,60 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{Multi-armed experiment and covariate adjustment}{section.1}% 2
+\BOOKMARK [2][-]{subsection.1.2}{Notation and definitions}{section.1}% 3
+\BOOKMARK [1][-]{section.2}{Causal inference with multi-armed experiments}{}% 4
+\BOOKMARK [2][-]{subsection.2.1}{Potential outcomes and treatment effects}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.2}{Assignment mechanism, estimators, and regression formulation}{section.2}% 6
+\BOOKMARK [2][-]{subsection.2.3}{Derived linear model and target parameters}{section.2}% 7
+\BOOKMARK [1][-]{section.3}{Regression adjustment via ordinary least squares}{}% 8
+\BOOKMARK [2][-]{subsection.3.1}{Asymptotic efficiency of \040L over \040N and \040F}{section.3}% 9
+\BOOKMARK [2][-]{subsection.3.2}{Asymptotic efficiency of \040L over a class of linear estimators}{section.3}% 10
+\BOOKMARK [2][-]{subsection.3.3}{Trade-off between \040L and \040F}{section.3}% 11
+\BOOKMARK [1][-]{section.4}{Regression adjustment via restricted least squares}{}% 12
+\BOOKMARK [2][-]{subsection.4.1}{Restricted least squares}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.2}{Examples}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.3}{Design-based theory of RLS}{section.4}% 15
+\BOOKMARK [3][-]{subsubsection.4.3.1}{Two types of restrictions}{subsection.4.3}% 16
+\BOOKMARK [3][-]{subsubsection.4.3.2}{r under the correlation-only restriction}{subsection.4.3}% 17
+\BOOKMARK [3][-]{subsubsection.4.3.3}{r under the separable restriction with Y=0}{subsection.4.3}% 18
+\BOOKMARK [3][-]{subsubsection.4.3.4}{Robust covariance for RLS}{subsection.4.3}% 19
+\BOOKMARK [2][-]{subsection.4.4}{ A concluding remark and an extension to rerandomization}{section.4}% 20
+\BOOKMARK [1][-]{section.5}{Regression adjustment in factorial experiments}{}% 21
+\BOOKMARK [2][-]{subsection.5.1}{Overview of factorial experiments}{section.5}% 22
+\BOOKMARK [2][-]{subsection.5.2}{Standard factorial effects for 2K factorial experiments}{section.5}% 23
+\BOOKMARK [2][-]{subsection.5.3}{Factor-saturated regressions for 2K factorial experiments}{section.5}% 24
+\BOOKMARK [2][-]{subsection.5.4}{Factor-unsaturated regressions}{section.5}% 25
+\BOOKMARK [2][-]{subsection.5.5}{Design-based properties of the factor-unsaturated regressions \(21\)\205\(23\)}{section.5}% 26
+\BOOKMARK [2][-]{subsection.5.6}{Extensions}{section.5}% 27
+\BOOKMARK [1][-]{section.6}{Simulation}{}% 28
+\BOOKMARK [1][-]{section.7}{Discussion}{}% 29
+\BOOKMARK [1][-]{section.1}{Rerandomization in the design stage}{}% 30
+\BOOKMARK [2][-]{subsection.1.1}{Overview}{section.1}% 31
+\BOOKMARK [2][-]{subsection.1.2}{ReM under multi-armed experiments}{section.1}% 32
+\BOOKMARK [1][-]{section.2}{Additional results on "426830A b "526930B Y}{}% 33
+\BOOKMARK [2][-]{subsection.2.1}{Sampling properties under complete randomization}{section.2}% 34
+\BOOKMARK [2][-]{subsection.2.2}{Sampling properties under ReM}{section.2}% 35
+\BOOKMARK [2][-]{subsection.2.3}{ReM-specific inference based on plug-in distributions}{section.2}% 36
+\BOOKMARK [1][-]{section.3}{Additional results on RLS}{}% 37
+\BOOKMARK [2][-]{subsection.3.1}{Properties under general restriction}{section.3}% 38
+\BOOKMARK [2][-]{subsection.3.2}{Asymptotic Normality under separable restriction}{section.3}% 39
+\BOOKMARK [2][-]{subsection.3.3}{Numeric properties of RLS}{section.3}% 40
+\BOOKMARK [1][-]{section.4}{Additional results on 2K factorial experiments}{}% 41
+\BOOKMARK [2][-]{subsection.4.1}{Design-based theory for the general regression}{section.4}% 42
+\BOOKMARK [2][-]{subsection.4.2}{Factorial effects under \1730,1\175-coded regressions}{section.4}% 43
+\BOOKMARK [1][-]{section.5}{Proof of the results on "426830A b "526930B Y}{}% 44
+\BOOKMARK [2][-]{subsection.5.1}{Lemmas}{section.5}% 45
+\BOOKMARK [2][-]{subsection.5.2}{Complete randomization}{section.5}% 46
+\BOOKMARK [2][-]{subsection.5.3}{ReM}{section.5}% 47
+\BOOKMARK [1][-]{section.6}{Proof of the results on treatment-based regressions}{}% 48
+\BOOKMARK [2][-]{subsection.6.1}{Notation and useful facts}{section.6}% 49
+\BOOKMARK [2][-]{subsection.6.2}{Asymptotics of L}{section.6}% 50
+\BOOKMARK [2][-]{subsection.6.3}{Results on outputs from OLS}{section.6}% 51
+\BOOKMARK [2][-]{subsection.6.4}{Results on outputs from RLS}{section.6}% 52
+\BOOKMARK [3][-]{subsubsection.6.4.1}{RLS with general restriction}{subsection.6.4}% 53
+\BOOKMARK [3][-]{subsubsection.6.4.2}{RLS with correlation-only restriction}{subsection.6.4}% 54
+\BOOKMARK [3][-]{subsubsection.6.4.3}{RLS with separable restriction}{subsection.6.4}% 55
+\BOOKMARK [3][-]{subsubsection.6.4.4}{Robust covariance}{subsection.6.4}% 56
+\BOOKMARK [3][-]{subsubsection.6.4.5}{Numeric properties}{subsection.6.4}% 57
+\BOOKMARK [1][-]{section.7}{Proof of the results on factor-based regressions}{}% 58
+\BOOKMARK [2][-]{subsection.7.1}{Standard factorial effects}{section.7}% 59
+\BOOKMARK [2][-]{subsection.7.2}{Factorial effects under \1730,1\175-coded regressions}{section.7}% 60

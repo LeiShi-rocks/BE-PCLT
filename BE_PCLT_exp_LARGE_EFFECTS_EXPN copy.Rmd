@@ -1,0 +1,754 @@
+---
+title: "BE_PCLT_simulation"
+author: "Lei Shi"
+date: '2022-08-12'
+output: pdf_document
+---
+
+```{r message=FALSE}
+# Input everything
+library("dplyr")
+options(dplyr.summarise.inform = FALSE)
+
+library("ggplot2")
+library("tidyverse")
+if(!require("AlgDesign")){
+  install.packages("AlgDesign")
+}
+library("AlgDesign")
+if(!require("coop")){
+  install.packages("coop")
+}
+library("coop")
+library("car")
+library("glmnet")
+
+if (!require('Rcpp', quietly = TRUE)) { install.packages('Rcpp') } 
+library('Rcpp') # Load package 'Rcpp'
+ 
+if (!require('RcppArmadillo', quietly = TRUE)) { install.packages('RcppArmadillo') } 
+library('RcppArmadillo') # Load package 'RcppArmadillo'
+
+
+source("auxillary_functions.R")
+```
+
+# Generating the basic setup 
+
+
+```{r}
+# generate a factorial experiment
+# basic parameter setup
+K <- 10
+num_trt_group <- 2^K
+
+# design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = rep(1,2^K), 1)
+# design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+active_facs <- rowSums(data.ind)
+trt_group_size <- rep(1, 2^K)
+trt_group_size[1:660] <- 1
+trt_group_size[661:1010]  <- 2
+trt_group_size[1011:1024] <- 30
+num_pop <- sum(trt_group_size)
+
+Q_U <- 660 # unreplicated small arms
+Q_R <- 350  # replicated small arms
+Q_L <- 14 # large arms
+```
+
+
+
+```{r}
+# generate factorial design
+design.core <- factor.design(K, trt_group_size = rep(1,2^K), interaction = 2, centering = 1/2)
+data.ind <- factor.design(K, trt_group_size = trt_group_size, 1)
+design.run <- factor.design(K, trt_group_size = trt_group_size, interaction = 2, centering = 1/2)
+
+
+# generate factorial effects
+set.seed(2023)
+
+tau <- c(
+  runif(choose(K,0), 0.1, 0.5) * sign(runif(choose(K,0), -1, 1)),
+  runif(choose(K,1), 0.1, 0.5) * sign(runif(choose(K,1), -1, 1)),
+  runif(choose(K,2), 0.05, 0.25) * sign(runif(choose(K,2), -1, 1)) * rbinom(choose(K,2), 1, 0.7)
+)
+
+
+names(tau) <- c("(Intecept)", names(design.core))
+
+# non-zeros
+nonzero.effect <- paste0("F", setdiff(1:K, c(1,4,7,10)))
+# nonzero.effect <- paste0("F",c(1,4,7,10))
+# nonzero.effect <- paste0("F", 1:2)
+nonzero.effect <- c(nonzero.effect, 
+                    heredity.proceed.new(K, nonzero.effect, 1,
+                                         "strong")$working_model)
+zero.effect <- setdiff(names(tau), nonzero.effect)
+tau[zero.effect] <- 0
+
+tau
+```
+
+
+```{r}
+# generate finite population
+mu <- as.matrix(design.core) %*% tau[-1]
+
+finite.pop.opts <- list()
+
+# finite.pop initialization
+finite.pop.opts$dist <- rep("exp", 2^K)
+finite.pop.opts$mu  <- mu
+finite.pop.opts$rate  <- rbinom(2^K, 1, 0.5) + 1
+finite.pop.init <- list(
+  num_pop = num_pop,
+  num_trt_group = num_trt_group,
+  finite.pop.opts = finite.pop.opts
+)
+
+# generate a finite population
+pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+
+pop_cov <- coop::covar(pop_1) 
+# very fast!! so much faster than cov()
+
+true_cov_Yhat <- diag(diag(pop_cov)/trt_group_size) - (1/num_pop) * pop_cov
+
+```
+
+
+```{r}
+# specify target effects and target design
+target_effect  <- c('F2', 'F4', 'F6', 'F8', 'F10')
+target_design  <- design.core[,target_effect]
+
+target_tau <- 1/2^K * t(as.matrix(target_design)) %*% mu
+
+```
+
+
+```{r}
+# population level:
+## tau
+cat("tau\n")
+target_tau
+cat("\n")
+
+## variance for the estimator
+cat("true variance\n")
+true_cov_tauhat <- t(as.matrix(target_design)) %*% true_cov_Yhat %*% as.matrix(target_design) / 1024^2
+true_cov_tauhat
+sqrt(diag(true_cov_tauhat))
+cat("\n")
+```
+
+
+### the following are experimenting codes:
+
+```{r}
+# factorial.data opts
+factorial.data.opts <- list()
+
+# factorial.data init
+factorial.data.init <- list(
+  num_factors = K,
+  trt_group_size = trt_group_size,
+  pop = pop_1,
+  factorial.data.opts = factorial.data.opts,
+  finite.pop.init = list()
+)
+
+factorial_data_list <- factorial.data(K, trt_group_size, pop = pop_1, factorial.data.opts, finite.pop.init)
+
+factorial_data <- factorial_data_list$factorial_data
+
+
+
+```
+
+
+```{r}
+# === Grouping by lexicographical order ===
+# augment the original factorial data
+factorial_data_aug <- factorial_data %>% 
+  group_by(across(11:2)) %>%
+  mutate(trt_group_size = n(),
+         avg_y = mean(y)
+         )
+
+# add id for each arm
+id_arm <- factorial_data %>% group_by(across(11:2)) %>%
+  group_indices()
+factorial_data_aug <- data.frame(factorial_data_aug, id_arm)
+
+
+# unique trt_group_size for the working data
+wk_trt_group_size <- factorial_data_aug %>%
+  group_by(id_arm) %>%
+  summarize(n = n()) 
+wk_trt_group_size <- wk_trt_group_size$n
+
+
+# initialize unique id_group
+id_group <- rep(NA, 2^K)
+
+# replicated arms
+units_RP <- trt_group_size >= 2
+id_group_RP <- 1:sum(units_RP)
+id_group[units_RP] <- id_group_RP 
+
+# grouping individuals for unreplicated arms
+
+units_URP <- trt_group_size == 1
+id_group_URP <- ceiling((1:sum(units_URP))/2) + sum(units_RP)
+# for the case of odd number of groups
+id_group_URP[length(id_group_URP)] <- id_group_URP[length(id_group_URP) - 1] 
+
+
+
+# permute the data based on the lexicographical order chosen
+if (1) {
+  #factorial_data_aug_URP <- subset(factorial_data_aug, trt_group_size == 1, select = 2:11)
+  #factorial_data_aug_URP <- factorial_data_aug_URP %>% arrange(across(1:10))
+  #factorial_data_aug_URP <- cbind(factorial_data_aug_URP, id_group_URP)
+  #factorial_data_aug_URP <- factorial_data_aug_URP %>% arrange(across(10:1)) # original order
+  # 
+  #id_group[units_URP] <- factorial_data_aug_URP$id_group_URP
+  id_group[units_URP] <- id_group_URP
+}
+
+
+
+
+
+# alternatively, permute the data based on the outcome order;
+# cannot match pairs; otherwise tends to underestimate the variance
+# instead, try clustering with large groups!
+if (0) {
+  factorial_data_aug_URP <- subset(factorial_data_aug, trt_group_size == 1, select = c(1:11))
+  km_fit <- kmeans(factorial_data_aug_URP$y, centers = 2, nstart = 25)
+  id_group[units_URP] <- km_fit$cluster + sum(units_RP)
+}
+
+
+# alternatively, try random grouping
+if (0) {
+  id_group[units_URP] <- sample(id_group_URP)
+}
+
+
+# tail(id_group) # sanity check = Q_U/2 + Q_R + Q_L
+
+id_group <- rep(id_group, wk_trt_group_size)
+
+factorial_data_aug  <- data.frame(factorial_data_aug, id_group)
+
+# estimate variance for each arm
+factorial_data_aug <- factorial_data_aug %>% 
+  group_by(id_group) %>%
+  mutate(group_pop  = n()) %>%
+  mutate(mu = case_when(
+    trt_group_size == 1 ~ (1-3/num_pop)^(-1) * (1-1/group_pop)^(-1),
+    trt_group_size >= 2 ~ trt_group_size/(trt_group_size - 1)
+  ))%>%
+  mutate(group_var = var(y)) %>%
+  #mutate(group_sum = sum(y)) %>%
+  #mutate(group_mean = case_when(
+  #  trt_group_size == 1 ~ (group_sum - y)/(group_pop-1),
+  #  trt_group_size >= 2 ~ mean(y)
+  #))%>% 
+  mutate(group_mean = mean(y)) %>%
+  mutate(res_sq_adj = (y - group_mean)^2 * mu) %>%
+  ungroup() %>%
+  group_by(id_arm) %>%
+  mutate(avg_res_sq_adj = mean(res_sq_adj))
+
+
+factorial_data_core <- factorial_data_aug %>%
+  dplyr::select(id_arm, 
+                id_group, 
+                avg_y, 
+                trt_group_size, 
+                group_pop,
+                mu,
+                avg_res_sq_adj
+                ) %>%
+  distinct()
+
+```
+
+
+```{r}
+1/2^K * t(as.matrix(target_design)) %*% factorial_data_core$avg_y
+
+sqrt(diag((1/2^K)^2 * t(as.matrix(target_design)) %*% diag(factorial_data_core$avg_res_sq_adj) %*% as.matrix(target_design)))
+```
+
+```{r}
+# Alternatively, do unsaturated regression - weighted least square + EHW variance estimation
+data_in <- data.frame(y=factorial_data$y, design.run)
+data_fit <- lm(y~-1+F2+F4+F6+F8+F10, data = data_in, weights = rep(1/trt_group_size, trt_group_size))
+summary(data_fit)
+
+sqrt(diag(hccm(data_fit, 'hc2')))
+```
+
+
+```{r}
+# Alternatively, do unsaturated regression - weighted least square + EHW variance estimation
+data_in <- data.frame(y=factorial_data$y, design.run)
+data_fit <- lm(y~-1 + (F2 + F4 + F6 + F8 + F10)^2, data = data_in, weights = rep(1/trt_group_size, trt_group_size))
+summary(data_fit)
+
+sqrt(diag(hccm(data_fit, 'hc2')))
+```
+
+
+
+### mark
+```{r}
+# coverage of confidence intervals
+
+```
+
+
+```{r}
+# Wald type inference
+
+```
+
+
+
+### Simulation section
+
+```{r}
+# Simulation specifications
+target_effect <- c('F2', 'F4', 'F6', 'F8', 'F10')
+set.seed(2022)
+num_iter <- 1000
+rec_point_est <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_var_est_wls_0 <- array(NA, dim = c(5, 5, num_iter))
+rec_var_est_wls_1 <- array(NA, dim = c(5, 5, num_iter))
+rec_var_est_ehw_0 <- array(NA, dim = c(5, 5, num_iter))
+rec_var_est_ehw_1 <- array(NA, dim = c(5, 5, num_iter))
+rec_var_est_lex <- array(NA, dim = c(5, 5, num_iter))
+rec_coverage_wls_0 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_coverage_wls_1 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_coverage_ehw_0 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_coverage_ehw_1 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_coverage_lex <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_reject_wls_0 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_reject_wls_1 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_reject_ehw_0 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_reject_ehw_1 <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_reject_lex <- matrix(NA, nrow = 5, ncol = num_iter)
+
+#rec_wald_wls_0 <- rep(NA, num_iter)
+#rec_wald_wls_1 <- rep(NA, num_iter)
+#rec_wald_ehw_0 <- rep(NA, num_iter)
+#rec_wald_ehw_1 <- rep(NA, num_iter)
+#rec_wald_lex <- rep(NA, num_iter)
+
+
+for (iter in 1:num_iter){
+  # ============= generate factorial data =====================
+  # factorial.data opts
+  factorial.data.opts <- list()
+
+  # factorial.data init
+  factorial.data.init <- list(
+    num_factors = K,
+    trt_group_size = trt_group_size,
+    pop = pop_1,
+    factorial.data.opts = factorial.data.opts,
+    finite.pop.init = list()
+  )
+
+  factorial_data_list <- factorial.data(K, trt_group_size, pop = pop_1, factorial.data.opts, finite.pop.init)
+
+  factorial_data <- factorial_data_list$factorial_data
+  # ============================================================
+  
+  
+  # ============= estimation by unsaturated wls 0 ================
+  data_in <- data.frame(y=factorial_data$y, design.run)
+  data_fit <- lm(y~-1+F2+F4+F6+F8+F10, 
+                 data = data_in, 
+                 weights = rep(1/trt_group_size, trt_group_size))
+  
+  # point estimates
+  rec_point_est[ , iter] <- summary(data_fit)$coef[,'Estimate']
+  
+  # variance estimation
+  rec_var_est_wls_0[ , , iter] <- diag((summary(data_fit)$coef[,'Std. Error'])^2)
+  rec_var_est_ehw_0[ , , iter] <- hccm(data_fit, 'hc2')
+  
+  z_score <- qnorm(0.975)
+  
+  # CI coverage
+  rec_coverage_wls_0[, iter] <- (abs(rec_point_est[ , iter] - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_wls_0[ , , iter]))))
+  rec_coverage_ehw_0[, iter] <- (abs(rec_point_est[ , iter] - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_ehw_0[ , , iter]))))
+  
+  # rejection of H0
+  rec_reject_wls_0[, iter] <- (abs(rec_point_est[ , iter]) > 
+    (z_score * sqrt(diag(rec_var_est_wls_0[ , , iter]))))
+  rec_reject_ehw_0[, iter] <- (abs(rec_point_est[ , iter]) > 
+    (z_score * sqrt(diag(rec_var_est_ehw_0[ , , iter]))))
+  
+  # Wald type inference
+  #q_score <- qchisq(0.95, df = 5)
+  #chisq_wls_0 <- t(rec_point_est[ , iter] - tau[target_effect]) %*%
+  #  solve(rec_var_est_wls_0[,,iter]) %*%
+  #  (rec_point_est[ , iter] - tau[target_effect])
+  
+  #chisq_ehw_0 <- t(rec_point_est[ , iter] - tau[target_effect]) %*%
+  #  solve(rec_var_est_ehw_0[,,iter]) %*%
+  #  (rec_point_est[ , iter] - tau[target_effect])
+  
+  #rec_wald_wls_0[iter] <- (chisq_wls_0 <= q_score)
+  #rec_wald_ehw_0[iter] <- (chisq_ehw_0 <= q_score)
+  
+  # ============================================================
+  
+  
+  # ============= estimation by unsaturated wls 1 ================
+  data_in <- data.frame(y=factorial_data$y, design.run)
+  data_fit <- lm(y~-1+(F2+F4+F6+F8+F10)^2, 
+                 data = data_in, 
+                 weights = rep(1/trt_group_size, trt_group_size))
+  
+  # variance estimation
+  rec_var_est_wls_1[ , , iter] <- diag((summary(data_fit)$coef[target_effect,'Std. Error'])^2)
+  rec_var_est_ehw_1[ , , iter] <- hccm(data_fit, 'hc2')[target_effect, target_effect]
+  
+  z_score <- qnorm(0.975)
+  
+  # CI coverage
+  rec_coverage_wls_1[, iter] <- (abs(rec_point_est[ , iter] - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_wls_1[ , , iter]))))
+  rec_coverage_ehw_1[, iter] <- (abs(rec_point_est[ , iter] - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_ehw_1[ , , iter]))))
+  
+  # rejection of H0
+  rec_reject_wls_1[, iter] <- (abs(rec_point_est[ , iter]) > 
+    (z_score * sqrt(diag(rec_var_est_wls_1[ , , iter]))))
+  rec_reject_ehw_1[, iter] <- (abs(rec_point_est[ , iter]) > 
+    (z_score * sqrt(diag(rec_var_est_ehw_1[ , , iter]))))
+  
+  # Wald type inference
+  #q_score <- qchisq(0.95, df = 5)
+  #chisq_wls_1 <- t(rec_point_est[ , iter] - tau[target_effect]) %*%
+  #  solve(rec_var_est_wls_1[,,iter]) %*%
+  #  (rec_point_est[ , iter] - tau[target_effect])
+  
+  #chisq_ehw_1 <- t(rec_point_est[ , iter] - tau[target_effect]) %*%
+  #  solve(rec_var_est_ehw_1[,,iter]) %*%
+  #  (rec_point_est[ , iter] - tau[target_effect])
+  
+  #rec_wald_wls_1[iter] <- (chisq_wls_1 <= q_score)
+  #rec_wald_ehw_1[iter] <- (chisq_ehw_1 <= q_score)
+  
+  # ============================================================
+  
+  
+  # ============= estimation by lexicographical grouping ====================
+  # augment the original factorial data
+  factorial_data_aug <- factorial_data %>% 
+    group_by(across(11:2)) %>%
+    mutate(trt_group_size = n(),
+           avg_y = mean(y)
+           )
+
+  
+  # add id for each arm
+  id_arm <- factorial_data %>% 
+    group_by(across(11:2)) %>%
+    group_indices()
+  factorial_data_aug <- data.frame(factorial_data_aug, id_arm)
+
+
+  # unique trt_group_size for the working data
+  wk_trt_group_size <- factorial_data_aug %>%
+    group_by(id_arm) %>%
+    summarize(n = n()) 
+  wk_trt_group_size <- wk_trt_group_size$n
+
+
+  # initialize unique id_group
+  id_group <- rep(NA, 2^K)
+
+  # replicated arms
+  units_RP <- trt_group_size >= 2
+  id_group_RP <- 1:sum(units_RP)
+  id_group[units_RP] <- id_group_RP 
+
+  # grouping individuals for unreplicated arms
+
+  units_URP <- trt_group_size == 1
+  id_group_URP <- ceiling((1:sum(units_URP))/2) + sum(units_RP)
+  # for the case of odd number of groups
+  id_group_URP[length(id_group_URP)] <- id_group_URP[length(id_group_URP) - 1] 
+
+
+  # creat id_group vector
+  id_group[units_URP] <- id_group_URP
+
+
+  # tail(id_group) # sanity check = Q_U/2 + Q_R + Q_L
+
+  id_group <- rep(id_group, wk_trt_group_size)
+
+  factorial_data_aug  <- data.frame(factorial_data_aug, id_group)
+
+  # estimate variance for each arm
+  factorial_data_aug <- factorial_data_aug %>% 
+    group_by(id_group) %>%
+    mutate(group_pop  = n()) %>%
+    mutate(mu = case_when(
+      trt_group_size == 1 ~ (1-3/num_pop)^(-1) * (1-1/group_pop)^(-1),
+      trt_group_size >= 2 ~ trt_group_size/(trt_group_size - 1)
+    ))%>%
+    mutate(group_var = var(y)) %>%
+    mutate(group_mean = mean(y)) %>%
+    mutate(res_sq_adj = (y - group_mean)^2 * mu) %>%
+    ungroup() %>%
+    group_by(id_arm) %>%
+    mutate(avg_res_sq_adj = mean(res_sq_adj))
+
+  # create the arm-wise summary data
+  factorial_data_core <- factorial_data_aug %>%
+    dplyr::select(id_arm, 
+                  id_group, 
+                  avg_y, 
+                  trt_group_size, 
+                  group_pop,
+                  mu,
+                  avg_res_sq_adj
+                  ) %>%
+    distinct()
+
+  # variance estimation
+  rec_var_est_lex[, , iter] <- (1/2^K)^2 * t(as.matrix(target_design)) %*% 
+              diag(factorial_data_core$avg_res_sq_adj) %*% 
+              as.matrix(target_design)
+  
+  # CI coverage
+  rec_coverage_lex[, iter] <- (abs(rec_point_est[ , iter] - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_lex[ , , iter]))))
+  
+  # Rejection of H0: \beta = 0.
+  rec_reject_lex[, iter] <- (abs(rec_point_est[ , iter]) > 
+    (z_score * sqrt(diag(rec_var_est_lex[ , , iter]))))
+  
+  # Wald inference
+  #chisq_lex <- t(rec_point_est[ , iter] - tau[target_effect]) %*%
+  #  solve(rec_var_est_lex[,,iter]) %*%
+  #  (rec_point_est[ , iter] - tau[target_effect])
+  
+  #rec_wald_lex[iter] <- (chisq_lex <= q_score)
+  
+  # ============================================================
+
+}
+
+
+
+
+```
+
+
+```{r eval=FALSE, include=FALSE}
+# saving data
+record <- list(
+  rec_point_est = rec_point_est,
+  rec_var_est_wls_0 = rec_var_est_wls_0,
+  rec_var_est_wls_1 = rec_var_est_wls_1,
+  rec_var_est_ehw_0 = rec_var_est_ehw_0,
+  rec_var_est_ehw_1 = rec_var_est_ehw_1,
+  rec_var_est_lex = rec_var_est_lex,
+  rec_coverage_wls_0 = rec_coverage_wls_0,
+  rec_coverage_wls_1 = rec_coverage_wls_1,
+  rec_coverage_ehw_0 = rec_coverage_ehw_0,
+  rec_coverage_ehw_1 = rec_coverage_ehw_1,
+  rec_coverage_lex = rec_coverage_lex,
+  rec_reject_wls_0 = rec_reject_wls_0,
+  rec_reject_wls_1 = rec_reject_wls_1,
+  rec_reject_ehw_0 = rec_reject_ehw_0,
+  rec_reject_ehw_1 = rec_reject_ehw_1,
+  rec_reject_lex   = rec_reject_lex
+  #rec_wald_wls_0 = rec_wald_wls_0,
+  #rec_wald_wls_1 = rec_wald_wls_1,
+  #rec_wald_ehw_0 = rec_wald_ehw_0,
+  #rec_wald_ehw_1 = rec_wald_ehw_1,
+  #rec_wald_lex = rec_wald_lex
+)
+
+setwd("~/Desktop/Research/BE_PCLT")
+saveRDS(record, file="record_LARGE_EFFECTS_EXPN.RData")
+
+```
+
+
+
+
+
+### Simulation on the size of the groups:
+
+
+
+```{r eval=FALSE, include=FALSE}
+# Simulation specifications
+target_effect <- c('F2', 'F4', 'F6', 'F8', 'F10')
+set.seed(2022)
+num_iter <- 500
+tests <- 10
+
+# 6 specs of group sizes: 2 3 4 5 6 7
+rec_point_est <- matrix(NA, nrow = 5, ncol = num_iter)
+rec_var_est_lex <- array(NA, dim = c(5, 5, num_iter, tests))
+rec_coverage_lex <- array(NA, dim = c(5, num_iter, tests))
+rec_wald_lex <- array(NA, dim = c(num_iter, tests))
+
+for (giter in 1:tests){
+  for (iter in 1:num_iter){
+  # ============= generate factorial data =====================
+  # factorial.data opts
+  factorial.data.opts <- list()
+
+  # factorial.data init
+  factorial.data.init <- list(
+    num_factors = K,
+    trt_group_size = trt_group_size,
+    pop = pop_1,
+    factorial.data.opts = factorial.data.opts,
+    finite.pop.init = list()
+  )
+
+  factorial_data_list <- factorial.data(K, trt_group_size, pop = pop_1, factorial.data.opts, finite.pop.init)
+
+  factorial_data <- factorial_data_list$factorial_data
+  # ============================================================
+
+  
+  
+  # ============= estimation by lexicographical grouping ====================
+  # augment the original factorial data
+  factorial_data_aug <- factorial_data %>% 
+    group_by(across(11:2)) %>%
+    mutate(trt_group_size = n(),
+           avg_y = mean(y)
+           )
+
+  
+  # add id for each arm
+  id_arm <- factorial_data %>% 
+    group_by(across(11:2)) %>%
+    group_indices()
+  factorial_data_aug <- data.frame(factorial_data_aug, id_arm)
+
+  # unique trt_group_size for the working data
+  wk_trt_group_size <- factorial_data_aug %>%
+    group_by(id_arm) %>%
+    summarize(n = n()) 
+  wk_trt_group_size <- wk_trt_group_size$n
+
+  # initialize unique id_group
+  id_group <- rep(NA, 2^K)
+
+  # replicated arms
+  units_RP <- trt_group_size >= 2
+  id_group_RP <- 1:sum(units_RP)
+  id_group[units_RP] <- id_group_RP 
+
+  
+  # grouping individuals for unreplicated arms
+  units_URP <- trt_group_size == 1
+  id_group_URP <- ceiling((1:sum(units_URP))/(2*giter)) + sum(units_RP)
+  # for the case of odd number of groups
+  id_group_URP[length(id_group_URP)] <- id_group_URP[length(id_group_URP) - 1] 
+
+
+  # creat id_group vector
+  id_group[units_URP] <- id_group_URP
+
+
+  # tail(id_group) # sanity check = Q_U/2 + Q_R + Q_L
+
+  id_group <- rep(id_group, wk_trt_group_size)
+
+  factorial_data_aug  <- data.frame(factorial_data_aug, id_group)
+
+  # estimate variance for each arm
+  factorial_data_aug <- factorial_data_aug %>% 
+    group_by(id_group) %>%
+    mutate(group_pop  = n()) %>%
+    mutate(mu = case_when(
+      trt_group_size == 1 ~ (1-3/num_pop)^(-1) * (1-1/group_pop)^(-2),
+      trt_group_size >= 2 ~ trt_group_size/(trt_group_size - 1)
+    ))%>%
+    mutate(group_var = var(y)) %>%
+    mutate(group_mean = mean(y)) %>%
+    mutate(res_sq_adj = (y - group_mean)^2 * mu) %>%
+    ungroup() %>%
+    group_by(id_arm) %>%
+    mutate(avg_res_sq_adj = mean(res_sq_adj))
+
+  # create the arm-wise summary data
+  factorial_data_core <- factorial_data_aug %>%
+    dplyr::select(id_arm, 
+                  id_group, 
+                  avg_y, 
+                  trt_group_size, 
+                  group_pop,
+                  mu,
+                  avg_res_sq_adj
+                  ) %>%
+    distinct()
+
+  # point estimate
+  rec_point_est[ , iter] <- 1/2^K * t(as.matrix(target_design)) %*% factorial_data_core$avg_y
+  
+  # variance estimation
+  rec_var_est_lex[, , iter, giter] <- (1/2^K)^2 * t(as.matrix(target_design)) %*% 
+              diag(factorial_data_core$avg_res_sq_adj) %*% 
+              as.matrix(target_design)
+  
+  # CI coverage
+  # rec_coverage_lex[, iter, giter] <- (abs(rec_point_est[ , iter] - tau[target_effect]) <= 
+  #   (z_score * sqrt(diag(rec_var_est_lex[ , , iter, giter]))))
+  
+  # Wald inference
+  # chisq_lex <- t(rec_point_est[ , iter] - tau[target_effect]) %*%
+  #   solve(rec_var_est_lex[,,iter, giter]) %*%
+  #   (rec_point_est[ , iter] - tau[target_effect])
+  
+  # rec_wald_lex[iter, giter] <- (chisq_lex <= q_score)
+  
+  # ============================================================
+
+}
+}
+
+```
+
+
+```{r eval=FALSE, include=FALSE}
+# saving data
+record <- list(
+  rec_point_est = rec_point_est,
+  rec_var_est_lex = rec_var_est_lex,
+  # rec_coverage_lex = rec_coverage_lex,
+  # rec_wald_lex = rec_wald_lex
+)
+
+setwd("~/Desktop/Research/BE_PCLT")
+saveRDS(record, file="record_SMALL_EFFECTS_VARY_LEX.RData")
+
+```
+
+
