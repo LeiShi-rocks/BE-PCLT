@@ -5,6 +5,674 @@ date: '2022-08-12'
 output: pdf_document
 ---
 
+# Simulation section
+```{r}
+# parallel back-end ------------------------------------------------------
+library(doSNOW)      # <- NEW  (doParallel no longer needed)
+library(doRNG)
+n_cores <- 6L
+cl      <- parallel::makeCluster(n_cores, type = "SOCK")
+registerDoSNOW(cl)            # <- key difference
+registerDoRNG(2025)           # reproducible
+
+library(foreach)     # %dopar%
+library(dplyr)       # already used
+library(car)         # hccm()
+library(coop)        # coop::covar()
+
+# Input everything
+library("dplyr")
+options(dplyr.summarise.inform = FALSE)
+
+library("ggplot2")
+library("tidyverse")
+if(!require("AlgDesign")){
+  install.packages("AlgDesign")
+}
+library("AlgDesign")
+if(!require("coop")){
+  install.packages("coop")
+}
+library("coop")
+library("car")
+library("glmnet")
+
+if (!require('Rcpp', quietly = TRUE)) { install.packages('Rcpp') } 
+library('Rcpp') # Load package 'Rcpp'
+ 
+if (!require('RcppArmadillo', quietly = TRUE)) { install.packages('RcppArmadillo') } 
+library('RcppArmadillo') # Load package 'RcppArmadillo'
+
+library(tidyverse)
+library(latex2exp)
+
+source("auxillary_functions.R")
+
+```
+
+## One rep
+```{r}
+# helper function
+one_rep <- function(iter,
+                    K,
+                    num_iter,
+                    trt_group_size,
+                    pop_1,
+                    design.run,
+                    design.core,
+                    target_design,
+                    tau,
+                    target_effect,
+                    z_score) {
+
+  ## --------------  your original per-iteration code -------------------
+  num_pop = nrow(pop_1)
+  # ============= generate factorial data =====================
+  factorial.data.opts <- list()
+  factorial.data.init <- list(
+    num_factors      = K,
+    trt_group_size   = trt_group_size,
+    pop              = pop_1,
+    factorial.data.opts = factorial.data.opts,
+    finite.pop.init  = list()
+  )
+
+  factorial_data_list <- factorial.data(K,
+                                        trt_group_size,
+                                        pop = pop_1,
+                                        factorial.data.opts,
+                                        finite.pop.init)
+
+  factorial_data <- factorial_data_list$factorial_data
+  # --------------------------------------------------------------------
+  
+  # ============= estimation by unsaturated wls 0 ================
+  data_in <- data.frame(y=factorial_data$y, design.run)
+  data_fit <- lm(y~-1+F1+F2+F3+F4+F5, 
+                 data = data_in, 
+                 weights = rep(1/trt_group_size, trt_group_size))
+  
+  # point estimates
+  rec_point_est <- summary(data_fit)$coef[,'Estimate']
+  
+  # variance estimation
+  rec_var_est_wls_0 <- diag((summary(data_fit)$coef[,'Std. Error'])^2)
+  rec_var_est_ehw_0 <- hccm(data_fit, 'hc2')
+  
+  z_score <- qnorm(0.975)
+  
+  # CI coverage
+  rec_coverage_wls_0 <- (abs(rec_point_est - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_wls_0))))
+  rec_coverage_ehw_0 <- (abs(rec_point_est - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_ehw_0))))
+  
+  # rejection of H0
+  rec_reject_wls_0 <- (abs(rec_point_est) > 
+    (z_score * sqrt(diag(rec_var_est_wls_0))))
+  rec_reject_ehw_0 <- (abs(rec_point_est) > 
+    (z_score * sqrt(diag(rec_var_est_ehw_0))))
+  
+  
+  # ============= estimation by unsaturated wls 1 ================
+  data_in <- data.frame(y=factorial_data$y, design.run)
+  data_fit <- lm(y~-1+(F1+F2+F3+F4+F5)^2, 
+                 data = data_in, 
+                 weights = rep(1/trt_group_size, trt_group_size))
+  
+  # variance estimation
+  rec_var_est_wls_1<- diag((summary(data_fit)$coef[target_effect,'Std. Error'])^2)
+  rec_var_est_ehw_1 <- hccm(data_fit, 'hc2')[target_effect, target_effect]
+  
+  z_score <- qnorm(0.975)
+  
+  # CI coverage
+  rec_coverage_wls_1 <- (abs(rec_point_est - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_wls_1))))
+  rec_coverage_ehw_1 <- (abs(rec_point_est - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_ehw_1))))
+  
+  # rejection of H0
+  rec_reject_wls_1 <- (abs(rec_point_est) > 
+    (z_score * sqrt(diag(rec_var_est_wls_1))))
+  rec_reject_ehw_1 <- (abs(rec_point_est) > 
+    (z_score * sqrt(diag(rec_var_est_ehw_1))))
+  
+  
+  
+  # ============= estimation by lexicographical grouping ====================
+  # augment the original factorial data
+  factorial_data_aug <- factorial_data %>% 
+    group_by(across((K+1):2)) %>%
+    mutate(trt_group_size = n(),
+           avg_y = mean(y)
+           )
+
+  
+  # add id for each arm
+  id_arm <- factorial_data %>% 
+    group_by(across((K+1):2)) %>%
+    group_indices()
+  factorial_data_aug <- data.frame(factorial_data_aug, id_arm)
+
+
+  # unique trt_group_size for the working data
+  wk_trt_group_size <- factorial_data_aug %>%
+    group_by(id_arm) %>%
+    summarize(n = n()) 
+  wk_trt_group_size <- wk_trt_group_size$n
+
+
+  # initialize unique id_group
+  id_group <- rep(NA, 2^K)
+
+  # replicated arms
+  units_RP <- trt_group_size >= 2
+  id_group_RP <- 1:sum(units_RP)
+  id_group[units_RP] <- id_group_RP 
+
+  # grouping individuals for unreplicated arms
+
+  units_URP <- trt_group_size == 1
+  id_group_URP <- ceiling((1:sum(units_URP))/2) + sum(units_RP)
+  # for the case of odd number of groups
+  id_group_URP[length(id_group_URP)] <- id_group_URP[length(id_group_URP) - 1] 
+
+
+  # creat id_group vector
+  id_group[units_URP] <- id_group_URP
+
+
+  # tail(id_group) # sanity check = Q_U/2 + Q_R + Q_L
+
+  id_group <- rep(id_group, wk_trt_group_size)
+
+  factorial_data_aug  <- data.frame(factorial_data_aug, id_group)
+
+  # estimate variance for each arm
+  factorial_data_aug <- factorial_data_aug %>% 
+    group_by(id_group) %>%
+    mutate(group_pop  = n()) %>%
+    mutate(mu = case_when(
+      trt_group_size == 1 ~ (1-3/num_pop)^(-1) * (1-1/group_pop)^(-1),
+      trt_group_size >= 2 ~ trt_group_size/(trt_group_size - 1)
+    ))%>%
+    mutate(group_var = var(y)) %>%
+    mutate(group_mean = mean(y)) %>%
+    mutate(res_sq_adj = (y - group_mean)^2 * mu) %>%
+    ungroup() %>%
+    group_by(id_arm) %>%
+    mutate(avg_res_sq_adj = mean(res_sq_adj))
+
+  # create the arm-wise summary data
+  factorial_data_core <- factorial_data_aug %>%
+    dplyr::select(id_arm, 
+                  id_group, 
+                  avg_y, 
+                  trt_group_size, 
+                  group_pop,
+                  mu,
+                  avg_res_sq_adj
+                  ) %>%
+    distinct()
+
+  # variance estimation
+  rec_var_est_lex <- (1/2^K)^2 * t(as.matrix(target_design)) %*% 
+              diag(factorial_data_core$avg_res_sq_adj) %*% 
+              as.matrix(target_design)
+  
+  # CI coverage
+  rec_coverage_lex <- (abs(rec_point_est - tau[target_effect]) <= 
+    (z_score * sqrt(diag(rec_var_est_lex))))
+  
+  # Rejection of H0: \beta = 0.
+  rec_reject_lex <- (abs(rec_point_est) > 
+    (z_score * sqrt(diag(rec_var_est_lex))))
+
+  ## … <—— keep *everything* that used to be inside the inner loop
+  ##      unchanged.  At the very bottom, *return* what you filled in
+  ##      before.  For example:
+  list(
+    point_est          = rec_point_est,       # a 5-vector
+    var_wls_0          = rec_var_est_wls_0,   # 5×5
+    var_ehw_0          = rec_var_est_ehw_0,
+    var_wls_1          = rec_var_est_wls_1,
+    var_ehw_1          = rec_var_est_ehw_1,
+    var_lex            = rec_var_est_lex,
+    cov_wls_0          = rec_coverage_wls_0,  # logical 5-vector
+    cov_ehw_0          = rec_coverage_ehw_0,
+    cov_wls_1          = rec_coverage_wls_1,
+    cov_ehw_1          = rec_coverage_ehw_1,
+    cov_lex            = rec_coverage_lex,
+    rej_wls_0          = rec_reject_wls_0,
+    rej_ehw_0          = rec_reject_ehw_0,
+    rej_wls_1          = rec_reject_wls_1,
+    rej_ehw_1          = rec_reject_ehw_1,
+    rej_lex            = rec_reject_lex
+  )
+}
+```
+
+## Simulation formal
+```{r}
+Ks        <- 7:10          #  {7,8,9,10}
+num_iter  <- 1000L          #  as before
+z_score   <- qnorm(0.975)  #  constant across K
+
+results   <- vector("list", length(Ks))   # one element per K
+names(results) <- paste0("K", Ks)
+
+for (K in Ks) {
+
+  ## ---- ALL *outer-loop* code that used to precede your old inner loop --
+  num_trt_group <- 2^K
+  Q_U <- floor(0.65 * num_trt_group)
+  Q_R <- floor(0.33 * num_trt_group)
+  Q_L <- num_trt_group - Q_U - Q_R
+  trt_group_size <- rep(1, num_trt_group)
+  trt_group_size[1:Q_U]                     <- 1
+  trt_group_size[(Q_U + 1):(Q_U + Q_R)]     <- 2
+  trt_group_size[(Q_U + Q_R + 1):num_trt_group] <- 30
+  num_pop <- sum(trt_group_size)
+
+  design.core <- factor.design(K,
+                               trt_group_size = rep(1, num_trt_group),
+                               interaction    = 2,
+                               centering      = 1/2)
+  design.run  <- factor.design(K,
+                               trt_group_size = trt_group_size,
+                               interaction    = 2,
+                               centering      = 1/2)
+
+  ## … (the whole chunk that computes tau, pop_1, target_design, etc.)
+  ### generate factorial effects
+  set.seed(2025)
+  
+  tau <- c(
+    runif(choose(K,0), 0.1, 0.5) * sign(runif(choose(K,0), -1, 1)),
+    runif(choose(K,1), 0.1, 0.5) * sign(runif(choose(K,1), -1, 1)),
+    runif(choose(K,2), 0.05, 0.25) * sign(runif(choose(K,2), -1, 1)) * rbinom(choose(K,2), 1, 0.7)
+  )
+  
+  names(tau) <- c("(Intecept)", names(design.core))
+  
+  # non-zeros
+  nonzero.effect <- paste0("F", setdiff(1:K, c(1,4,7,10)))
+  # nonzero.effect <- paste0("F",c(1,4,7,10))
+  # nonzero.effect <- paste0("F", 1:2)
+  nonzero.effect <- c(nonzero.effect, 
+                      heredity.proceed.new(K, nonzero.effect, 1,
+                                           "strong")$working_model)
+  zero.effect <- setdiff(names(tau), nonzero.effect)
+  tau[zero.effect] <- 0
+  
+  ### generate a population 
+  # generate finite population
+  mu <- as.matrix(design.core) %*% tau[-1]
+  
+  finite.pop.opts <- list()
+  
+  # finite.pop initialization
+  finite.pop.opts$dist <- rep("exp", 2^K)
+  finite.pop.opts$mu  <- mu
+  finite.pop.opts$rate  <- rbinom(2^K, 1, 0.5) + 1
+  finite.pop.init <- list(
+    num_pop = num_pop,
+    num_trt_group = num_trt_group,
+    finite.pop.opts = finite.pop.opts
+  )
+  
+  pop_1 <- finite.pop(num_pop, num_trt_group, finite.pop.opts)
+  pop_cov <- coop::covar(pop_1) 
+  # very fast!! so much faster than cov()
+  
+  true_cov_Yhat <- diag(diag(pop_cov)/trt_group_size) - (1/num_pop) * pop_cov
+  
+  target_effect  <- c('F1', 'F2', 'F3', 'F4', 'F5')
+  target_design  <- design.core[,target_effect]
+
+  target_tau <- 1/2^K * t(as.matrix(target_design)) %*% mu
+
+  ## ----------------  PARALLEL Monte-Carlo loop ------------------------
+  # --- inside the outer K-loop ------------------------------------------
+  pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
+  
+  progress <- function(n) setTxtProgressBar(pb, n)   # tiny helper
+  opts     <- list(progress = progress)              # options.snow list
+  
+  res_list <- foreach(iter = 1:num_iter, 
+                      .packages = c("dplyr","car","coop"),
+                      .options.snow = opts) %dopar% {
+
+      one_rep(iter        = iter,
+              K           = K,
+              num_iter    = num_iter,
+              trt_group_size = trt_group_size,
+              pop_1          = pop_1,
+              design.run     = design.run,
+              design.core    = design.core,
+              target_design  = target_design,
+              tau            = tau,
+              target_effect  = target_effect,
+              z_score        = z_score)
+                    }
+  close(pb)
+  ## --------------------------------------------------------------------
+
+  ## stack / simplify the list of lists into arrays exactly like the
+  ## originals.  Example for the point estimates:
+  rec_point_est <- simplify2array(lapply(res_list, `[[`, "point_est"))
+  ## rec_point_est is 5 × num_iter, identical to the original object.
+  ## Repeat for every entry you saved.  A helper:
+  extract_array <- function(name, d) {
+    out <- simplify2array(lapply(res_list, `[[`, name))
+    if (length(dim(out)) == 3L && d == 2) out <- aperm(out, c(1,3,2))
+    out
+  }
+
+  results[[paste0("K",K)]] <- list(
+    rec_point_est       = rec_point_est,
+    rec_var_est_wls_0   = extract_array("var_wls_0", 3),
+    rec_var_est_ehw_0   = extract_array("var_ehw_0",3),
+    rec_var_est_wls_1   = extract_array("var_wls_1",3),
+    rec_var_est_ehw_1   = extract_array("var_ehw_1",3),
+    rec_var_est_lex     = extract_array("var_lex",3),
+    rec_coverage_wls_0  = extract_array("cov_wls_0",2),
+    rec_coverage_ehw_0  = extract_array("cov_ehw_0",2),
+    rec_coverage_wls_1  = extract_array("cov_wls_1",2),
+    rec_coverage_ehw_1  = extract_array("cov_ehw_1",2),
+    rec_coverage_lex    = extract_array("cov_lex",2),
+    rec_reject_wls_0    = extract_array("rej_wls_0",2),
+    rec_reject_ehw_0    = extract_array("rej_ehw_0",2),
+    rec_reject_wls_1    = extract_array("rej_wls_1",2),
+    rec_reject_ehw_1    = extract_array("rej_ehw_1",2),
+    rec_reject_lex      = extract_array("rej_lex",2)
+  )
+}
+
+stopCluster(cl)
+```
+
+```{r}
+saveRDS(results, file = "Revision-202505/sim_results_parallel_large.rds")
+```
+
+
+# Report results
+## Preliminary
+
+```{r}
+# report results
+record <- readRDS("Revision-202505/sim_results_parallel_large.rds")
+```
+
+
+```{r}
+Ks      <- 7:10
+target_effect <- paste0("F", 1:5)
+
+create_tau <- function(K){
+  set.seed(2025)                                         # ← same as in the sim
+  design.core <- factor.design(K,
+                               trt_group_size = rep(1, 2^K),
+                               interaction    = 2,
+                               centering      = 1/2)
+
+  tau <- c(
+    runif(choose(K,0), 0.1, 0.5)  * sign(runif(choose(K,0), -1, 1)),
+    runif(choose(K,1), 0.1, 0.5)* sign(runif(choose(K,1), -1, 1)),
+    runif(choose(K,2), 0.05, 0.25)* sign(runif(choose(K,2), -1, 1)) *
+      rbinom(choose(K,2), 1, 0.7)
+  )
+  names(tau) <- c("(Intercept)", names(design.core))
+
+  ## zero-out inactive effects — identical to your original script
+  nonzero <- paste0("F", setdiff(1:K, c(1,4,7,10)))
+  nonzero <- c(nonzero,
+               heredity.proceed.new(K, nonzero, 1, "strong")$working_model)
+  tau[setdiff(names(tau), nonzero)] <- 0
+  tau
+}
+
+true_sd_fun <- function(K, trt_group_size){
+
+  ## ------- design matrices --------
+  design.core <- factor.design(K,
+                               trt_group_size = rep(1, 2^K),
+                               interaction    = 2,
+                               centering      = 1/2)
+
+  target_design <- as.matrix(design.core[, paste0("F", 1:5)])  # 2^K × 5
+
+  ## ------- same τ and finite population as in the simulation --------
+  tau <- create_tau(K)                        # helper from previous reply
+
+  mu  <- as.matrix(design.core) %*% tau[-1]   # grand means for each arm
+
+  finite.pop.opts <- list(
+    dist = rep("exp", 2^K),
+    mu   = mu,
+    rate = rbinom(2^K, 1, 0.5) + 1
+  )
+
+  num_pop <- sum(trt_group_size)
+  pop_1   <- finite.pop(num_pop, 2^K, finite.pop.opts)
+
+  pop_cov        <- coop::covar(pop_1)                    # 2^K × 2^K
+  true_cov_Yhat  <- diag(diag(pop_cov) / trt_group_size) -
+                    (1 / num_pop) * pop_cov
+
+  true_cov_tauhat <- (1 / 2^K)^2 *
+                     t(target_design) %*% true_cov_Yhat %*% target_design
+
+  sqrt(diag(true_cov_tauhat))          # length-5 vector, order F1…F5
+}
+
+```
+
+
+## Distributional plot
+```{r}
+hist_data <- map_dfr(Ks, function(k){
+  true_tau <- create_tau(k)[target_effect]          # 5-vector
+  
+  ## matrix 5 × 1000  →  vector length 5 000
+  est_mat  <- record[[paste0("K", k)]]$rec_point_est
+  diff_mat <- sweep(est_mat, 1, true_tau, FUN = "-")
+  
+  tibble(
+    K      = factor(k, levels = Ks),
+    effect = factor(rep(target_effect, times = ncol(est_mat)),
+                    levels = target_effect),
+    diff   = as.vector(diff_mat)
+  )
+})
+```
+
+
+```{r}
+plot_SE <- ggplot(hist_data, aes(x = effect, y = diff)) +
+  geom_violin(fill = "grey70") +
+  facet_wrap(~ K, ncol = 2) +                      # one panel per K
+  geom_hline(yintercept = 0, linetype = 2) +       # truth
+  scale_x_discrete(labels = c(
+    "F1" = TeX("$F_1$"),
+    "F2" = TeX("$F_2$"),
+    "F3" = TeX("$F_3$"),
+    "F4" = TeX("$F_4$"),
+    "F5" = TeX("$F_5$")
+  )) +
+  labs(x = "Target effect",
+       y = expression(hat(gamma) - gamma)) +
+  theme_bw(base_size = 16) +
+  theme(legend.position = "none")
+
+plot_SE
+
+```
+
+```{r eval=FALSE, include=FALSE}
+ggsave(
+  "Revision-202505/BE_PCLT_LARGE_EFFECTS_EXPN.pdf",
+  plot = plot_SE,
+  device = "pdf", 
+  dpi = 300
+)
+```
+
+
+
+Takeaways:
+
+- CLT holds even the design is highly non-uniform.
+
+
+## Variance estimation
+
+
+We applied three methods for variance estimation:
+
+- ehw_0: wls + hc2 var, with specification: $Y\sim F1+F2+F3+F4+F5$
+- ehw_1: wls + hc2 var, with specification; $Y\sim (F1+F2+F3+F4+F5)^2$
+- lex:   lexicographical pairing
+
+
+```{r message=FALSE}
+variance_summary <- map_dfr(Ks, function(K){
+
+  # ---------- replicate the trt_group_size construction -------------
+  num_trt_group <- 2^K
+  Q_U <- floor(0.65 * num_trt_group)
+  Q_R <- floor(0.33 * num_trt_group)
+  Q_L <- num_trt_group - Q_U - Q_R
+  trt_group_size <- rep(1, num_trt_group)
+  trt_group_size[1:Q_U]                     <- 1
+  trt_group_size[(Q_U + 1):(Q_U + Q_R)]     <- 2
+  trt_group_size[(Q_U + Q_R + 1):num_trt_group] <- 30
+  # ------------------------------------------------------------------
+
+  true_sd <- true_sd_fun(K, trt_group_size)
+
+  rec      <- record[[paste0("K", K)]]
+
+  # helpers: mean of sqrt-variances across 1000 reps
+  mean_sd <- function(arr){
+    diag(apply(sqrt(arr), c(1,2), mean))   # length-5 vector
+  }
+
+  tibble(
+    K        = factor(K, levels = Ks),
+    effect   = factor(target_effect, levels = target_effect),
+    true_sd  = true_sd,
+    ehw_0_sd = mean_sd(rec$rec_var_est_ehw_0),
+    ehw_1_sd = mean_sd(rec$rec_var_est_ehw_1),
+    lex_sd   = mean_sd(rec$rec_var_est_lex)
+  )
+})
+
+variance_summary
+
+
+```
+
+
+
+Takeaways: in the small effect cases,
+
+- wls + ehw: both `ehw_0` and `ehw_1` are robust. Adding two-way interactions gives less conservative variance estimation.
+
+- lex:       `lex` pairing is robust. It works better than `ehw` since there is smaller between group variation. 
+
+ 
+
+## CI coverage
+
+```{r}
+# CI coverage
+coverage_summary <- map_dfr(Ks, function(K){
+
+  rec <- record[[paste0("K", K)]]
+
+  tibble(
+    K           = factor(K, levels = Ks),
+    effect      = factor(target_effect, levels = target_effect),
+
+    lex_cov     = rowMeans(rec$rec_coverage_lex),
+    ehw_0_cov   = rowMeans(rec$rec_coverage_ehw_0),
+    ehw_1_cov   = rowMeans(rec$rec_coverage_ehw_1)
+  )
+})
+
+coverage_summary
+```
+
+
+
+
+
+## Power
+
+```{r}
+power_summary <- map_dfr(Ks, function(K){
+
+  rec <- record[[paste0("K", K)]]
+
+  tibble(
+    K           = factor(K, levels = Ks),
+    effect      = factor(target_effect, levels = target_effect),
+
+    lex_power   = rowMeans(rec$rec_reject_lex),
+    ehw_0_power = rowMeans(rec$rec_reject_ehw_0),
+    ehw_1_power = rowMeans(rec$rec_reject_ehw_1)
+  )
+})
+
+power_summary
+```
+
+## Summarize a table
+```{r}
+library(tidyverse)   # dplyr + tidyr + purrr
+library(xtable)      # lightweight LaTeX table
+
+# ---- 1. merge coverage + power, round --------------------------------
+table_dat <- coverage_summary %>%
+  left_join(power_summary, by = c("K", "effect")) %>%     # keep names
+  mutate(across(-c(K, effect), \(x) sprintf("%.3f", x)))  # keep 3 dp as strings
+  # using sprintf keeps trailing zeros (e.g. 0.950)
+
+table_dat
+
+# ---- 2. xtable with fixed 3-dp formatting ----------------------------
+digits_vec <- c(0, 0, 0, rep(3, 6))   # rownames, K, effect, 6 numeric cols
+
+xtab <- xtable(
+  table_dat,
+  align   = c("l", "l", "l", rep("c", 6)),
+  digits  = digits_vec,               # <- enforce 3 decimals
+  caption = "Empirical coverage and power (95\\% two-sided tests) for three variance estimators across four designs $(K=7,8,9,10)$ and five effects."
+)
+
+add.head <- list(
+  pos      = list(0),
+  command  = paste0(
+    "\\multicolumn{2}{c}{} & ",
+    "\\multicolumn{3}{c}{Coverage} & ",
+    "\\multicolumn{3}{c}{Power} \\\\ \n",
+    "\\cmidrule(lr){3-5}\\cmidrule(lr){6-8}\n"
+  )
+)
+
+print(xtab,
+      include.rownames        = FALSE,
+      booktabs                = TRUE,
+      add.to.row              = add.head,
+      sanitize.text.function  = identity)
+```
+
+
+# Old simulations
+
 ```{r message=FALSE}
 # Input everything
 library("dplyr")
@@ -33,7 +701,7 @@ library('RcppArmadillo') # Load package 'RcppArmadillo'
 source("auxillary_functions.R")
 ```
 
-# Generating the basic setup 
+## Generating the basic setup 
 
 
 ```{r}
